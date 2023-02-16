@@ -3,9 +3,9 @@ pub fn is_valid_token(token: &str) -> bool {
         && ((token.starts_with(|f: char| f.is_numeric()) && token.chars().all(|f| f.is_numeric()))
             || (token.starts_with(|f: char| f.is_alphabetic())
                 && token.chars().all(|f| f.is_alphanumeric()))
-            || (token
+            || token
                 .chars()
-                .all(|f| matches!(f, '+' | '-' | '*' | '/' | '\\'))))
+                .all(|f| matches!(f, '+' | '-' | '*' | '/' | '\\')))
 }
 
 pub fn tokenize<'a>(string: &'a str, mut vec: Vec<&'a str>) -> Result<Vec<&'a str>, &'a str> {
