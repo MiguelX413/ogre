@@ -13,7 +13,7 @@ pub fn tokenize<'a>(string: &'a str, mut vec: Vec<&'a str>) -> Result<Vec<&'a st
         vec.push(string);
         return Ok(vec);
     }
-    let bound = (0..=string.len())
+    let bound = (1..=string.len())
         .rev()
         .find(|&bound| string.get(0..bound).map_or(false, is_valid_token))
         .ok_or(string)?;
