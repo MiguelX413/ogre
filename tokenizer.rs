@@ -13,12 +13,16 @@ pub fn tokenize<'a>(string: &'a str, mut vec: Vec<&'a str>) -> Result<Vec<&'a st
         vec.push(string);
         return Ok(vec);
     }
-    let (bound, token) = (0..=string.len())
+    let bound = (0..=string.len())
         .rev()
-        .filter_map(|bound| Some((bound, string.get(0..bound)?)))
-        .find(|(_, substr)| is_valid_token(substr))
+        .find(|&bound| {
+            if let Some(substr) = string.get(0..bound) {
+                return is_valid_token(substr);
+            }
+            false
+        })
         .ok_or(string)?;
-    let (_, remainder) = string.split_at(bound);
+    let (token, remainder) = string.split_at(bound);
     vec.push(token);
     tokenize(remainder, vec)
 }
