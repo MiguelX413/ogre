@@ -15,12 +15,7 @@ pub fn tokenize<'a>(string: &'a str, mut vec: Vec<&'a str>) -> Result<Vec<&'a st
     }
     let bound = (0..=string.len())
         .rev()
-        .find(|&bound| {
-            if let Some(substr) = string.get(0..bound) {
-                return is_valid_token(substr);
-            }
-            false
-        })
+        .find(|&bound| string.get(0..bound).map_or(false, is_valid_token))
         .ok_or(string)?;
     let (token, remainder) = string.split_at(bound);
     vec.push(token);
