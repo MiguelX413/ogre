@@ -1,9 +1,13 @@
+pub fn is_valid_symbol(c: char) -> bool {
+    matches!(c, '+' | '-' | '*' | '/' | '\\')
+}
+
 pub fn token_bound(token: &str) -> Option<usize> {
     if token.starts_with(|f: char| f.is_numeric()) {
         return Some(
             token
                 .char_indices()
-                .find(|(_, f)| !f.is_numeric())
+                .find(|(_, f)| !f.is_numeric() | f.is_whitespace())
                 .map(|(i, _)| i)
                 .unwrap_or(token.len()),
         );
@@ -12,16 +16,16 @@ pub fn token_bound(token: &str) -> Option<usize> {
         return Some(
             token
                 .char_indices()
-                .find(|(_, f)| !f.is_alphanumeric())
+                .find(|(_, f)| !f.is_alphanumeric() | f.is_whitespace())
                 .map(|(i, _)| i)
                 .unwrap_or(token.len()),
         );
     }
-    if token.starts_with(|f: char| matches!(f, '+' | '-' | '*' | '/' | '\\')) {
+    if token.starts_with(is_valid_symbol) {
         return Some(
             token
                 .char_indices()
-                .find(|(_, f)| !matches!(f, '+' | '-' | '*' | '/' | '\\'))
+                .find(|(_, f)| !is_valid_symbol(*f) | f.is_whitespace())
                 .map(|(i, _)| i)
                 .unwrap_or(token.len()),
         );
@@ -30,7 +34,8 @@ pub fn token_bound(token: &str) -> Option<usize> {
 }
 
 pub fn split_first_token(token: &str) -> Option<(&str, &str)> {
-    Some(token.split_at(token_bound(token)?))
+    let trimmed = token.trim();
+    Some(trimmed.split_at(token_bound(trimmed)?))
 }
 
 struct SplitTokens<'a> {
@@ -71,6 +76,7 @@ fn main() {
         "catfood&-45",
         "catfood-45&",
         "&",
+        " catfood -45 67z23",
     ]
     .into_iter()
     .for_each(|string| println!("{string}: {:?}", tokenize(string)));
