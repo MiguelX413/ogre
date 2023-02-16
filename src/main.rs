@@ -9,7 +9,5 @@ fn main() {
     let file = File::open(path).unwrap();
     let buf = BufReader::new(file);
     let lines = buf.lines();
-    lines
-        .flat_map(str::split_whitespace)
-        .for_each(|f| println!("{f}"));
+    lines.for_each(|f| f.unwrap().split_whitespace().for_each(|x| println!("{x}")));
 }
