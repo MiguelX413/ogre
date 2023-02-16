@@ -7,7 +7,7 @@ pub fn token_bound(token: &str) -> Option<usize> {
         return Some(
             token
                 .char_indices()
-                .find(|(_, f)| !f.is_numeric() | f.is_whitespace())
+                .find(|(_, f)| !f.is_numeric())
                 .map(|(i, _)| i)
                 .unwrap_or(token.len()),
         );
@@ -16,7 +16,7 @@ pub fn token_bound(token: &str) -> Option<usize> {
         return Some(
             token
                 .char_indices()
-                .find(|(_, f)| !f.is_alphanumeric() | f.is_whitespace())
+                .find(|(_, f)| !f.is_alphanumeric())
                 .map(|(i, _)| i)
                 .unwrap_or(token.len()),
         );
@@ -25,7 +25,7 @@ pub fn token_bound(token: &str) -> Option<usize> {
         return Some(
             token
                 .char_indices()
-                .find(|(_, f)| !is_valid_symbol(*f) | f.is_whitespace())
+                .find(|(_, f)| !is_valid_symbol(*f))
                 .map(|(i, _)| i)
                 .unwrap_or(token.len()),
         );
