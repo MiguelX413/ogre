@@ -6,14 +6,14 @@ pub fn is_valid_symbol(c: char) -> bool {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub enum Operator {
+pub enum BinaryOperator {
     Add,
     Sub,
     Mul,
     Div,
 }
 
-impl Display for Operator {
+impl Display for BinaryOperator {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Add => write!(f, "+"),
@@ -24,7 +24,7 @@ impl Display for Operator {
     }
 }
 
-impl FromStr for Operator {
+impl FromStr for BinaryOperator {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -42,7 +42,7 @@ impl FromStr for Operator {
 pub enum Token<'a> {
     Word(&'a str),
     Number(i32),
-    Operator(Operator),
+    Operator(BinaryOperator),
 }
 
 pub fn token_bound(token: &str) -> Option<usize> {
