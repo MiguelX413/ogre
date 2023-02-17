@@ -1,4 +1,5 @@
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 pub fn is_valid_symbol(c: char) -> bool {
     matches!(c, '+' | '-' | '*' | '/' | '\\')
@@ -19,6 +20,20 @@ impl Display for Operator {
             Self::Sub => write!(f, "-"),
             Self::Mul => write!(f, "*"),
             Self::Div => write!(f, "/"),
+        }
+    }
+}
+
+impl FromStr for Operator {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim() {
+            "+" => Ok(Self::Add),
+            "-" => Ok(Self::Sub),
+            "*" => Ok(Self::Mul),
+            "/" => Ok(Self::Div),
+            _ => Err(()),
         }
     }
 }
