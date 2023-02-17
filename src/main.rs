@@ -5,7 +5,7 @@ pub fn is_valid_symbol(c: char) -> bool {
     matches!(c, '+' | '-' | '*' | '/' | '\\')
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum BinaryOperator {
     Add,
     Sub,
@@ -41,7 +41,7 @@ impl FromStr for BinaryOperator {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Keyword {
     If,
     Else,
@@ -68,7 +68,7 @@ impl FromStr for Keyword {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Token<'a> {
     Word(&'a str),
     Number(i32),
