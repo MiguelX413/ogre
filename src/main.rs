@@ -42,6 +42,33 @@ impl FromStr for BinaryOperator {
 }
 
 #[derive(Copy, Clone, Debug)]
+pub enum Keyword {
+    If,
+    Else,
+}
+
+impl Display for Keyword {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::If => write!(f, "if"),
+            Self::Else => write!(f, "else"),
+        }
+    }
+}
+
+impl FromStr for Keyword {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim() {
+            "if" => Ok(Self::If),
+            "else" => Ok(Self::Else),
+            _ => Err(()),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
 pub enum Token<'a> {
     Word(&'a str),
     Number(i32),
