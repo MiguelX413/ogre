@@ -1,5 +1,33 @@
+use std::fmt::{Display, Formatter};
+
 pub fn is_valid_symbol(c: char) -> bool {
     matches!(c, '+' | '-' | '*' | '/' | '\\')
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum Operator {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
+impl Display for Operator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Add => write!(f, "+"),
+            Self::Sub => write!(f, "-"),
+            Self::Mul => write!(f, "*"),
+            Self::Div => write!(f, "/"),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum Token<'a> {
+    Word(&'a str),
+    Number(i32),
+    Operator(Operator),
 }
 
 pub fn token_bound(token: &str) -> Option<usize> {
