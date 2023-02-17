@@ -11,6 +11,7 @@ pub enum BinaryOperator {
     Sub,
     Mul,
     Div,
+    Assign,
 }
 
 impl Display for BinaryOperator {
@@ -20,6 +21,7 @@ impl Display for BinaryOperator {
             Self::Sub => write!(f, "-"),
             Self::Mul => write!(f, "*"),
             Self::Div => write!(f, "/"),
+            Self::Assign => write!(f, "="),
         }
     }
 }
@@ -33,6 +35,7 @@ impl FromStr for BinaryOperator {
             "-" => Ok(Self::Sub),
             "*" => Ok(Self::Mul),
             "/" => Ok(Self::Div),
+            "=" => Ok(Self::Assign),
             _ => Err(()),
         }
     }
