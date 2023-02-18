@@ -40,6 +40,10 @@ impl Display for Delimiter {
 pub enum Keyword {
     If,
     Else,
+    While,
+    Loop,
+    True,
+    False,
 }
 
 impl Display for Keyword {
@@ -47,6 +51,10 @@ impl Display for Keyword {
         match self {
             Self::If => write!(f, "if"),
             Self::Else => write!(f, "else"),
+            Self::While => write!(f, "while"),
+            Self::Loop => write!(f, "loop"),
+            Self::True => write!(f, "true"),
+            Self::False => write!(f, "false"),
         }
     }
 }
@@ -124,6 +132,10 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
                 match token {
                     "if" => Token::Keyword(Keyword::If),
                     "else" => Token::Keyword(Keyword::Else),
+                    "while" => Token::Keyword(Keyword::While),
+                    "loop" => Token::Keyword(Keyword::Loop),
+                    "true" => Token::Keyword(Keyword::True),
+                    "false" => Token::Keyword(Keyword::False),
                     name => Token::Name(name),
                 },
                 remainder,
