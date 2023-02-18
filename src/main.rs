@@ -22,6 +22,21 @@ impl Display for BinaryOperator {
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Delimiter {
+    BraceLeft,
+    BraceRight,
+}
+
+impl Display for Delimiter {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::BraceLeft => write!(f, "{{"),
+            Self::BraceRight => write!(f, "}}"),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Keyword {
     If,
     Else,
@@ -36,9 +51,9 @@ impl Display for Keyword {
     }
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Token<'a> {
-    Block(Vec<Token<'a>>),
+    Delimiter(Delimiter),
     Keyword(Keyword),
     Name(&'a str),
     Number(i32),
@@ -50,28 +65,6 @@ pub struct ParseTokenError {}
 
 pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError> {
     let trimmed = string.trim();
-
-    if let Some(stripped) = trimmed.strip_prefix('{') {
-        let mut level: usize = 0;
-        let (block, remainder) = stripped
-            .split_once(|f: char| match (f, level) {
-                ('}', 0) => true,
-                ('{', _) => {
-                    level += 1;
-                    false
-                }
-                ('}', _) => {
-                    level -= 1;
-                    false
-                }
-                _ => false,
-            })
-            .ok_or(ParseTokenError {})?;
-        return Ok((
-            Token::Block(split_tokens(block).collect::<Result<_, _>>()?),
-            remainder,
-        ));
-    }
 
     let mut chars = trimmed.chars();
     match (chars.next(), chars.next()) {
@@ -96,6 +89,14 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
         (Some('/'), _) => Ok((Token::Operator(BinaryOperator::Div), trimmed.split_at(1).1)),
         (Some('='), _) => Ok((
             Token::Operator(BinaryOperator::Assign),
+            trimmed.split_at(1).1,
+        )),
+        (Some('{'), _) => Ok((
+            Token::Delimiter(Delimiter::BraceLeft),
+            trimmed.split_at(1).1,
+        )),
+        (Some('}'), _) => Ok((
+            Token::Delimiter(Delimiter::BraceRight),
             trimmed.split_at(1).1,
         )),
         (Some(c), _) => {
