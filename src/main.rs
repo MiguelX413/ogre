@@ -128,6 +128,7 @@ fn main() {
         "catfood-45&",
         "&",
         " catfood -45 67z23",
+        "if catfood-45 = 6723 else xd 324if3432",
     ]
     .into_iter()
     .for_each(|string| {
