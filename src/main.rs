@@ -1,10 +1,6 @@
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
-pub fn is_valid_symbol(c: char) -> bool {
-    matches!(c, '+' | '-' | '*' | '/' | '\\')
-}
-
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum BinaryOperator {
     Add,
@@ -75,40 +71,43 @@ pub enum Token<'a> {
     Operator(BinaryOperator),
 }
 
-pub fn token_bound(token: &str) -> Option<usize> {
-    if token.starts_with(|f: char| f.is_numeric()) {
-        return Some(
-            token
-                .char_indices()
-                .find(|(_, f)| !f.is_numeric())
-                .map(|(i, _)| i)
-                .unwrap_or(token.len()),
-        );
-    }
-    if token.starts_with(|f: char| f.is_alphabetic()) {
-        return Some(
-            token
-                .char_indices()
-                .find(|(_, f)| !f.is_alphanumeric())
-                .map(|(i, _)| i)
-                .unwrap_or(token.len()),
-        );
-    }
-    if token.starts_with(is_valid_symbol) {
-        return Some(
-            token
-                .char_indices()
-                .find(|(_, f)| !is_valid_symbol(*f))
-                .map(|(i, _)| i)
-                .unwrap_or(token.len()),
-        );
-    }
-    None
-}
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub struct ParseTokenError {}
 
-pub fn split_first_token(token: &str) -> Option<(&str, &str)> {
-    let trimmed = token.trim();
-    Some(trimmed.split_at(token_bound(trimmed)?))
+pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError> {
+    match string.chars().next() {
+        None => Err(ParseTokenError {}),
+        Some('+') => Ok((Token::Operator(BinaryOperator::Add), string.split_at(1).1)),
+        Some('-') => Ok((Token::Operator(BinaryOperator::Sub), string.split_at(1).1)),
+        Some('*') => Ok((Token::Operator(BinaryOperator::Mul), string.split_at(1).1)),
+        Some('/') => Ok((Token::Operator(BinaryOperator::Div), string.split_at(1).1)),
+        Some('=') => Ok((
+            Token::Operator(BinaryOperator::Assign),
+            string.split_at(1).1,
+        )),
+        Some('0'..='9') => {
+            let (token, remainder) = string.split_at(
+                string
+                    .find(|f: char| !(f.is_ascii_digit()))
+                    .unwrap_or(string.len()),
+            );
+            Ok((
+                Token::Number(token.parse::<i32>().map_err(|e| ParseTokenError {})?),
+                remainder,
+            ))
+        }
+        Some(c) => {
+            if !(c.is_alphanumeric() | (c == '_')) {
+                return Err(ParseTokenError {});
+            }
+            let (token, remainder) = string.split_at(
+                string
+                    .find(|f: char| !(f.is_alphanumeric() | (f == '_')))
+                    .unwrap_or(string.len()),
+            );
+            Ok((Token::Word(token), remainder))
+        }
+    }
 }
 
 struct SplitTokens<'a> {
@@ -122,21 +121,23 @@ impl<'a> SplitTokens<'a> {
 }
 
 impl<'a> Iterator for SplitTokens<'a> {
-    type Item = Result<&'a str, &'a str>;
+    type Item = Result<Token<'a>, ParseTokenError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.remainder.is_empty() {
             return None;
         }
-        let Some((token, remainder)) = split_first_token(self.remainder) else {
-            return Some(Err(self.remainder));
-        };
-        self.remainder = remainder;
-        Some(Ok(token))
+        Some(match split_first_token(self.remainder) {
+            Ok((token, remainder)) => {
+                self.remainder = remainder;
+                Ok(token)
+            }
+            Err(err) => Err(err),
+        })
     }
 }
 
-pub fn tokenize(string: &str) -> Result<Vec<&str>, &str> {
+pub fn tokenize(string: &str) -> Result<Vec<Token>, ParseTokenError> {
     SplitTokens::new(string).collect()
 }
 
