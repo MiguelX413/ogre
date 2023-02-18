@@ -129,12 +129,10 @@ fn main() {
         "catfood-45",
         "catfood",
         "67z23",
-        "&catfood-45",
         "catfood&-45",
-        "catfood-45&",
         "&",
-        " catfood -45 - 45 + +45 67z23",
-        "if catfood-45 = 1 6723 else xd 324if if3432",
+        " -45 - 45 + +45",
+        "if +2 + -2 else x = x - 5 ",
     ]
     .into_iter()
     .for_each(|string| {
