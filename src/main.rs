@@ -83,21 +83,33 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
                 remainder,
             ))
         }
-        (Some('+'), _) => Ok((Token::Operator(BinaryOperator::Add), trimmed.split_at(1).1)),
-        (Some('-'), _) => Ok((Token::Operator(BinaryOperator::Sub), trimmed.split_at(1).1)),
-        (Some('*'), _) => Ok((Token::Operator(BinaryOperator::Mul), trimmed.split_at(1).1)),
-        (Some('/'), _) => Ok((Token::Operator(BinaryOperator::Div), trimmed.split_at(1).1)),
+        (Some('+'), _) => Ok((
+            Token::Operator(BinaryOperator::Add),
+            trimmed.split_at('+'.len_utf8()).1,
+        )),
+        (Some('-'), _) => Ok((
+            Token::Operator(BinaryOperator::Sub),
+            trimmed.split_at('-'.len_utf8()).1,
+        )),
+        (Some('*'), _) => Ok((
+            Token::Operator(BinaryOperator::Mul),
+            trimmed.split_at('*'.len_utf8()).1,
+        )),
+        (Some('/'), _) => Ok((
+            Token::Operator(BinaryOperator::Div),
+            trimmed.split_at('/'.len_utf8()).1,
+        )),
         (Some('='), _) => Ok((
             Token::Operator(BinaryOperator::Assign),
-            trimmed.split_at(1).1,
+            trimmed.split_at('='.len_utf8()).1,
         )),
         (Some('{'), _) => Ok((
             Token::Delimiter(Delimiter::BraceLeft),
-            trimmed.split_at(1).1,
+            trimmed.split_at('{'.len_utf8()).1,
         )),
         (Some('}'), _) => Ok((
             Token::Delimiter(Delimiter::BraceRight),
-            trimmed.split_at(1).1,
+            trimmed.split_at('}'.len_utf8()).1,
         )),
         (Some(c), _) => {
             if !(c.is_alphanumeric() | (c == '_')) {
