@@ -130,5 +130,10 @@ fn main() {
         " catfood -45 67z23",
     ]
     .into_iter()
-    .for_each(|string| println!("{string}: {:?}", split_tokens(string).collect::<Vec<_>>()));
+    .for_each(|string| {
+        println!(
+            "{string}: {:?}",
+            split_tokens(string).collect::<Result<Vec<_>, _>>()
+        )
+    });
 }
