@@ -82,7 +82,7 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
                 match token {
                     "if" => Token::Keyword(Keyword::If),
                     "else" => Token::Keyword(Keyword::Else),
-                    word => Token::Name(word),
+                    name => Token::Name(name),
                 },
                 remainder,
             ))
@@ -128,12 +128,11 @@ fn main() {
         "catfood-45&",
         "&",
         " catfood -45 67z23",
-        "if catfood-45 = 6723 else xd 324if3432",
     ]
     .into_iter()
     .for_each(|string| {
         println!(
-            "{string}: {:?}",
+            "{string:?}: {:?}",
             split_tokens(string).collect::<Result<Vec<_>, _>>()
         )
     });
