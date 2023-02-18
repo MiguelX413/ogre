@@ -38,7 +38,8 @@ impl Display for Keyword {
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Token<'a> {
-    Word(&'a str),
+    Keyword(Keyword),
+    Name(&'a str),
     Number(i32),
     Operator(BinaryOperator),
 }
@@ -77,7 +78,14 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
                     .find(|f: char| !(f.is_alphanumeric() | (f == '_')))
                     .unwrap_or(string.len()),
             );
-            Ok((Token::Word(token), remainder))
+            Ok((
+                match token {
+                    "if" => Token::Keyword(Keyword::If),
+                    "else" => Token::Keyword(Keyword::Else),
+                    word => Token::Name(word),
+                },
+                remainder,
+            ))
         }
     }
 }
