@@ -67,17 +67,8 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
                 _ => false,
             })
             .ok_or(ParseTokenError {})?;
-        let mut block_tokens = split_tokens(block);
         return Ok((
-            match (block_tokens.next(), block_tokens.next()) {
-                (Some(only), None) => only?,
-                (a, b) => Token::Block(
-                    a.into_iter()
-                        .chain(b.into_iter())
-                        .chain(block_tokens)
-                        .collect::<Result<_, _>>()?,
-                ),
-            },
+            Token::Block(split_tokens(block).collect::<Result<_, _>>()?),
             remainder,
         ));
     }
@@ -166,7 +157,6 @@ fn main() {
         " -45 - 45 + +45",
         "if +2 + -2 else x = x - 5 ",
         "if {45 + {2 * 4} } - +5",
-        "3 + { 4 }",
     ]
     .into_iter()
     .for_each(|string| {
