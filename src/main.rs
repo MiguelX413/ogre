@@ -1,5 +1,4 @@
 use std::fmt::{Display, Formatter};
-use std::str::FromStr;
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum BinaryOperator {
@@ -22,21 +21,6 @@ impl Display for BinaryOperator {
     }
 }
 
-impl FromStr for BinaryOperator {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.trim() {
-            "+" => Ok(Self::Add),
-            "-" => Ok(Self::Sub),
-            "*" => Ok(Self::Mul),
-            "/" => Ok(Self::Div),
-            "=" => Ok(Self::Assign),
-            _ => Err(()),
-        }
-    }
-}
-
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Keyword {
     If,
@@ -48,18 +32,6 @@ impl Display for Keyword {
         match self {
             Self::If => write!(f, "if"),
             Self::Else => write!(f, "else"),
-        }
-    }
-}
-
-impl FromStr for Keyword {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.trim() {
-            "if" => Ok(Self::If),
-            "else" => Ok(Self::Else),
-            _ => Err(()),
         }
     }
 }
