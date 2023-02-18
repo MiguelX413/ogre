@@ -51,6 +51,20 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
     let mut chars = string.chars();
     match (chars.next(), chars.next()) {
         (None, _) => Err(ParseTokenError {}),
+        (Some('0'..='9'), _) | (Some('+') | Some('-'), Some('0'..='9')) => {
+            let (token, remainder) = string.split_at(
+                string
+                    .char_indices()
+                    .skip(1)
+                    .find(|(_, f)| !(f.is_ascii_digit()))
+                    .map(|(f, _)| f)
+                    .unwrap_or(string.len()),
+            );
+            Ok((
+                Token::Number(token.parse::<i32>().map_err(|e| ParseTokenError {})?),
+                remainder,
+            ))
+        }
         (Some('+'), _) => Ok((Token::Operator(BinaryOperator::Add), string.split_at(1).1)),
         (Some('-'), _) => Ok((Token::Operator(BinaryOperator::Sub), string.split_at(1).1)),
         (Some('*'), _) => Ok((Token::Operator(BinaryOperator::Mul), string.split_at(1).1)),
@@ -59,17 +73,6 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
             Token::Operator(BinaryOperator::Assign),
             string.split_at(1).1,
         )),
-        (Some('0'..='9'), _) => {
-            let (token, remainder) = string.split_at(
-                string
-                    .find(|f: char| !(f.is_ascii_digit()))
-                    .unwrap_or(string.len()),
-            );
-            Ok((
-                Token::Number(token.parse::<i32>().map_err(|e| ParseTokenError {})?),
-                remainder,
-            ))
-        }
         (Some(c), _) => {
             if !(c.is_alphanumeric() | (c == '_')) {
                 return Err(ParseTokenError {});
@@ -130,8 +133,8 @@ fn main() {
         "catfood&-45",
         "catfood-45&",
         "&",
-        " catfood -45 67z23",
-        "if catfood-45 = 6723 else xd 324if if3432",
+        " catfood -45 - 45 + +45 67z23",
+        "if catfood-45 = 1 6723 else xd 324if if3432",
     ]
     .into_iter()
     .for_each(|string| {
