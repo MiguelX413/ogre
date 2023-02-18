@@ -110,7 +110,7 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
     }
 }
 
-struct SplitTokens<'a> {
+pub struct SplitTokens<'a> {
     remainder: &'a str,
 }
 
@@ -134,8 +134,8 @@ impl<'a> Iterator for SplitTokens<'a> {
     }
 }
 
-pub fn tokenize(string: &str) -> Result<Vec<Token>, ParseTokenError> {
-    SplitTokens::new(string).collect()
+pub fn split_tokens(string: &str) -> SplitTokens {
+    SplitTokens::new(string)
 }
 
 fn main() {
@@ -150,5 +150,5 @@ fn main() {
         " catfood -45 67z23",
     ]
     .into_iter()
-    .for_each(|string| println!("{string}: {:?}", tokenize(string)));
+    .for_each(|string| println!("{string}: {:?}", split_tokens(string).collect::<Vec<_>>()));
 }
