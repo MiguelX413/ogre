@@ -119,6 +119,7 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
     }
 }
 
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SplitTokens<'a> {
     remainder: &'a str,
 }
