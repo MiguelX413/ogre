@@ -77,7 +77,7 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
     let mut chars = trimmed.chars();
     match (chars.next(), chars.next()) {
         (None, _) => Err(ParseTokenError {}),
-        (Some('0'..='9'), _) | (Some('+') | Some('-'), Some('0'..='9')) => {
+        (Some('0'..='9'), _) | (Some('+' | '-'), Some('0'..='9')) => {
             let (token, remainder) = trimmed.split_at(
                 trimmed
                     .char_indices()
