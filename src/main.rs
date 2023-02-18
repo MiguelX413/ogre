@@ -107,10 +107,12 @@ impl<'a> Iterator for SplitTokens<'a> {
         if self.remainder.is_empty() {
             return None;
         }
-        Some(split_first_token(self.remainder).map(|(token, remainder)| {
-            self.remainder = remainder;
-            token
-        }))
+        Some(
+            split_first_token(self.remainder.trim()).map(|(token, remainder)| {
+                self.remainder = remainder;
+                token
+            }),
+        )
     }
 }
 
@@ -128,6 +130,7 @@ fn main() {
         "catfood-45&",
         "&",
         " catfood -45 67z23",
+        "if catfood-45 = 6723 else xd 324if if3432",
     ]
     .into_iter()
     .for_each(|string| {
