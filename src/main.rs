@@ -48,39 +48,40 @@ pub enum Token<'a> {
 pub struct ParseTokenError {}
 
 pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError> {
-    let mut chars = string.chars();
+    let trimmed = string.trim();
+    let mut chars = trimmed.chars();
     match (chars.next(), chars.next()) {
         (None, _) => Err(ParseTokenError {}),
         (Some('0'..='9'), _) | (Some('+') | Some('-'), Some('0'..='9')) => {
-            let (token, remainder) = string.split_at(
-                string
+            let (token, remainder) = trimmed.split_at(
+                trimmed
                     .char_indices()
                     .skip(1)
                     .find(|(_, f)| !(f.is_ascii_digit()))
                     .map(|(f, _)| f)
-                    .unwrap_or(string.len()),
+                    .unwrap_or(trimmed.len()),
             );
             Ok((
                 Token::Number(token.parse::<i32>().map_err(|e| ParseTokenError {})?),
                 remainder,
             ))
         }
-        (Some('+'), _) => Ok((Token::Operator(BinaryOperator::Add), string.split_at(1).1)),
-        (Some('-'), _) => Ok((Token::Operator(BinaryOperator::Sub), string.split_at(1).1)),
-        (Some('*'), _) => Ok((Token::Operator(BinaryOperator::Mul), string.split_at(1).1)),
-        (Some('/'), _) => Ok((Token::Operator(BinaryOperator::Div), string.split_at(1).1)),
+        (Some('+'), _) => Ok((Token::Operator(BinaryOperator::Add), trimmed.split_at(1).1)),
+        (Some('-'), _) => Ok((Token::Operator(BinaryOperator::Sub), trimmed.split_at(1).1)),
+        (Some('*'), _) => Ok((Token::Operator(BinaryOperator::Mul), trimmed.split_at(1).1)),
+        (Some('/'), _) => Ok((Token::Operator(BinaryOperator::Div), trimmed.split_at(1).1)),
         (Some('='), _) => Ok((
             Token::Operator(BinaryOperator::Assign),
-            string.split_at(1).1,
+            trimmed.split_at(1).1,
         )),
         (Some(c), _) => {
             if !(c.is_alphanumeric() | (c == '_')) {
                 return Err(ParseTokenError {});
             }
-            let (token, remainder) = string.split_at(
-                string
+            let (token, remainder) = trimmed.split_at(
+                trimmed
                     .find(|f: char| !(f.is_alphanumeric() | (f == '_')))
-                    .unwrap_or(string.len()),
+                    .unwrap_or(trimmed.len()),
             );
             Ok((
                 match token {
@@ -111,12 +112,10 @@ impl<'a> Iterator for SplitTokens<'a> {
         if self.remainder.is_empty() {
             return None;
         }
-        Some(
-            split_first_token(self.remainder.trim()).map(|(token, remainder)| {
-                self.remainder = remainder;
-                token
-            }),
-        )
+        Some(split_first_token(self.remainder).map(|(token, remainder)| {
+            self.remainder = remainder;
+            token
+        }))
     }
 }
 
