@@ -48,17 +48,18 @@ pub enum Token<'a> {
 pub struct ParseTokenError {}
 
 pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError> {
-    match string.chars().next() {
-        None => Err(ParseTokenError {}),
-        Some('+') => Ok((Token::Operator(BinaryOperator::Add), string.split_at(1).1)),
-        Some('-') => Ok((Token::Operator(BinaryOperator::Sub), string.split_at(1).1)),
-        Some('*') => Ok((Token::Operator(BinaryOperator::Mul), string.split_at(1).1)),
-        Some('/') => Ok((Token::Operator(BinaryOperator::Div), string.split_at(1).1)),
-        Some('=') => Ok((
+    let mut chars = string.chars();
+    match (chars.next(), chars.next()) {
+        (None, _) => Err(ParseTokenError {}),
+        (Some('+'), _) => Ok((Token::Operator(BinaryOperator::Add), string.split_at(1).1)),
+        (Some('-'), _) => Ok((Token::Operator(BinaryOperator::Sub), string.split_at(1).1)),
+        (Some('*'), _) => Ok((Token::Operator(BinaryOperator::Mul), string.split_at(1).1)),
+        (Some('/'), _) => Ok((Token::Operator(BinaryOperator::Div), string.split_at(1).1)),
+        (Some('='), _) => Ok((
             Token::Operator(BinaryOperator::Assign),
             string.split_at(1).1,
         )),
-        Some('0'..='9') => {
+        (Some('0'..='9'), _) => {
             let (token, remainder) = string.split_at(
                 string
                     .find(|f: char| !(f.is_ascii_digit()))
@@ -69,7 +70,7 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
                 remainder,
             ))
         }
-        Some(c) => {
+        (Some(c), _) => {
             if !(c.is_alphanumeric() | (c == '_')) {
                 return Err(ParseTokenError {});
             }
