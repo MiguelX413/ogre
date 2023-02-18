@@ -75,40 +75,51 @@ pub enum Token<'a> {
     Operator(BinaryOperator),
 }
 
-pub fn token_bound(token: &str) -> Option<usize> {
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub struct ParseTokenError {}
+
+pub fn split_first_token(token: &str) -> Result<(Token, &str), ParseTokenError> {
+    let trimmed = token.trim();
+    Some(trimmed.split_at(token_bound(trimmed)?))
+}
+
+
+enum TokenKind {
+    Word,
+    Number,
+    Operator,
+}
+
+
+fn token_bound(token: &str) -> Result<(TokenKind, usize), ParseTokenError> {
     if token.starts_with(|f: char| f.is_numeric()) {
-        return Some(
-            token
+        return Ok(
+            (TokenKind::Number, token
                 .char_indices()
                 .find(|(_, f)| !f.is_numeric())
                 .map(|(i, _)| i)
-                .unwrap_or(token.len()),
+                .unwrap_or(token.len()))
         );
     }
     if token.starts_with(|f: char| f.is_alphabetic()) {
-        return Some(
-            token
+        return Ok(
+            (TokenKind::Word, token
                 .char_indices()
                 .find(|(_, f)| !f.is_alphanumeric())
                 .map(|(i, _)| i)
-                .unwrap_or(token.len()),
+                .unwrap_or(token.len()))
         );
     }
     if token.starts_with(is_valid_symbol) {
-        return Some(
-            token
+        return Ok(
+            (TokenKind::Operator, token
                 .char_indices()
                 .find(|(_, f)| !is_valid_symbol(*f))
                 .map(|(i, _)| i)
-                .unwrap_or(token.len()),
+                .unwrap_or(token.len()))
         );
     }
-    None
-}
-
-pub fn split_first_token(token: &str) -> Option<(&str, &str)> {
-    let trimmed = token.trim();
-    Some(trimmed.split_at(token_bound(trimmed)?))
+    Err(ParseTokenError {})
 }
 
 struct SplitTokens<'a> {
