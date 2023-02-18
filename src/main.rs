@@ -127,13 +127,10 @@ impl<'a> Iterator for SplitTokens<'a> {
         if self.remainder.is_empty() {
             return None;
         }
-        Some(match split_first_token(self.remainder) {
-            Ok((token, remainder)) => {
-                self.remainder = remainder;
-                Ok(token)
-            }
-            Err(err) => Err(err),
-        })
+        Some(split_first_token(self.remainder).map(|(token, remainder)| {
+            self.remainder = remainder;
+            token
+        }))
     }
 }
 
