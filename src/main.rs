@@ -36,8 +36,9 @@ impl Display for Keyword {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Token<'a> {
+    Block(Vec<Token<'a>>),
     Keyword(Keyword),
     Name(&'a str),
     Number(i32),
@@ -49,6 +50,29 @@ pub struct ParseTokenError {}
 
 pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError> {
     let trimmed = string.trim();
+
+    if let Some(stripped) = trimmed.strip_prefix('{') {
+        let mut level: usize = 0;
+        let (block, remainder) = stripped
+            .split_once(|f: char| match (f, level) {
+                ('}', 0) => true,
+                ('{', _) => {
+                    level += 1;
+                    false
+                }
+                ('}', _) => {
+                    level -= 1;
+                    false
+                }
+                _ => false,
+            })
+            .ok_or(ParseTokenError {})?;
+        return Ok((
+            Token::Block(split_tokens(block).collect::<Result<_, _>>()?),
+            remainder,
+        ));
+    }
+
     let mut chars = trimmed.chars();
     match (chars.next(), chars.next()) {
         (None, _) => Err(ParseTokenError {}),
@@ -132,6 +156,7 @@ fn main() {
         "&",
         " -45 - 45 + +45",
         "if +2 + -2 else x = x - 5 ",
+        "if {45 + {2 * 4} } - +5",
     ]
     .into_iter()
     .for_each(|string| {
