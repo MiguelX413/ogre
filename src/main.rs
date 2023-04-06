@@ -71,12 +71,16 @@ pub enum Token<'a> {
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct ParseTokenError {}
 
-pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError> {
+pub fn split_first_token(string: &str) -> Option<Result<(Token, &str), ParseTokenError>> {
     let trimmed = string.trim();
+
+    if trimmed.is_empty() {
+        return None;
+    }
 
     let mut chars = trimmed.chars();
     match (chars.next(), chars.next()) {
-        (None, _) => Err(ParseTokenError {}),
+        (None, _) => None,
         (Some('0'..='9'), _) | (Some('+' | '-'), Some('0'..='9')) => {
             let (token, remainder) = trimmed.split_at(
                 trimmed
@@ -86,49 +90,51 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
                     .map(|(f, _)| f)
                     .unwrap_or(trimmed.len()),
             );
-            Ok((
-                Token::Number(token.parse::<i32>().map_err(|e| ParseTokenError {})?),
-                remainder,
-            ))
+            Some(
+                token
+                    .parse::<i32>()
+                    .map_err(|_e| ParseTokenError {})
+                    .map(|n| (Token::Number(n), remainder)),
+            )
         }
-        (Some('+'), _) => Ok((
+        (Some('+'), _) => Some(Ok((
             Token::Operator(BinaryOperator::Add),
             trimmed.split_at('+'.len_utf8()).1,
-        )),
-        (Some('-'), _) => Ok((
+        ))),
+        (Some('-'), _) => Some(Ok((
             Token::Operator(BinaryOperator::Sub),
             trimmed.split_at('-'.len_utf8()).1,
-        )),
-        (Some('*'), _) => Ok((
+        ))),
+        (Some('*'), _) => Some(Ok((
             Token::Operator(BinaryOperator::Mul),
             trimmed.split_at('*'.len_utf8()).1,
-        )),
-        (Some('/'), _) => Ok((
+        ))),
+        (Some('/'), _) => Some(Ok((
             Token::Operator(BinaryOperator::Div),
             trimmed.split_at('/'.len_utf8()).1,
-        )),
-        (Some('='), _) => Ok((
+        ))),
+        (Some('='), _) => Some(Ok((
             Token::Operator(BinaryOperator::Assign),
             trimmed.split_at('='.len_utf8()).1,
-        )),
-        (Some('{'), _) => Ok((
+        ))),
+        (Some('{'), _) => Some(Ok((
             Token::Delimiter(Delimiter::BraceLeft),
             trimmed.split_at('{'.len_utf8()).1,
-        )),
-        (Some('}'), _) => Ok((
+        ))),
+        (Some('}'), _) => Some(Ok((
             Token::Delimiter(Delimiter::BraceRight),
             trimmed.split_at('}'.len_utf8()).1,
-        )),
+        ))),
         (Some(c), _) => {
             if !(c.is_alphanumeric() | (c == '_')) {
-                return Err(ParseTokenError {});
+                return Some(Err(ParseTokenError {}));
             }
             let (token, remainder) = trimmed.split_at(
                 trimmed
                     .find(|f: char| !(f.is_alphanumeric() | (f == '_')))
                     .unwrap_or(trimmed.len()),
             );
-            Ok((
+            Some(Ok((
                 match token {
                     "if" => Token::Keyword(Keyword::If),
                     "else" => Token::Keyword(Keyword::Else),
@@ -139,7 +145,7 @@ pub fn split_first_token(string: &str) -> Result<(Token, &str), ParseTokenError>
                     name => Token::Name(name),
                 },
                 remainder,
-            ))
+            )))
         }
     }
 }
@@ -159,13 +165,12 @@ impl<'a> Iterator for SplitTokens<'a> {
     type Item = Result<Token<'a>, ParseTokenError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.remainder.is_empty() {
-            return None;
-        }
-        Some(split_first_token(self.remainder).map(|(token, remainder)| {
-            self.remainder = remainder;
-            token
-        }))
+        split_first_token(self.remainder).map(|result| {
+            result.map(|(token, remainder)| {
+                self.remainder = remainder;
+                token
+            })
+        })
     }
 }
 
