@@ -71,16 +71,16 @@ pub enum Token<'a> {
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct ParseTokenError {}
 
-pub fn split_first_token(string: &str) -> Option<Result<(Token, &str), ParseTokenError>> {
+pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTokenError> {
     let trimmed = string.trim();
 
     if trimmed.is_empty() {
-        return None;
+        return Ok(None);
     }
 
     let mut chars = trimmed.chars();
     match (chars.next(), chars.next()) {
-        (None, _) => None,
+        (None, _) => Ok(None),
         (Some('0'..='9'), _) | (Some('+' | '-'), Some('0'..='9')) => {
             let (token, remainder) = trimmed.split_at(
                 trimmed
@@ -90,51 +90,49 @@ pub fn split_first_token(string: &str) -> Option<Result<(Token, &str), ParseToke
                     .map(|(f, _)| f)
                     .unwrap_or(trimmed.len()),
             );
-            Some(
-                token
-                    .parse::<i32>()
-                    .map_err(|_e| ParseTokenError {})
-                    .map(|n| (Token::Number(n), remainder)),
-            )
+            Ok(Some((
+                Token::Number(token.parse::<i32>().map_err(|_e| ParseTokenError {})?),
+                remainder,
+            )))
         }
-        (Some('+'), _) => Some(Ok((
+        (Some('+'), _) => Ok(Some((
             Token::Operator(BinaryOperator::Add),
             trimmed.split_at('+'.len_utf8()).1,
         ))),
-        (Some('-'), _) => Some(Ok((
+        (Some('-'), _) => Ok(Some((
             Token::Operator(BinaryOperator::Sub),
             trimmed.split_at('-'.len_utf8()).1,
         ))),
-        (Some('*'), _) => Some(Ok((
+        (Some('*'), _) => Ok(Some((
             Token::Operator(BinaryOperator::Mul),
             trimmed.split_at('*'.len_utf8()).1,
         ))),
-        (Some('/'), _) => Some(Ok((
+        (Some('/'), _) => Ok(Some((
             Token::Operator(BinaryOperator::Div),
             trimmed.split_at('/'.len_utf8()).1,
         ))),
-        (Some('='), _) => Some(Ok((
+        (Some('='), _) => Ok(Some((
             Token::Operator(BinaryOperator::Assign),
             trimmed.split_at('='.len_utf8()).1,
         ))),
-        (Some('{'), _) => Some(Ok((
+        (Some('{'), _) => Ok(Some((
             Token::Delimiter(Delimiter::BraceLeft),
             trimmed.split_at('{'.len_utf8()).1,
         ))),
-        (Some('}'), _) => Some(Ok((
+        (Some('}'), _) => Ok(Some((
             Token::Delimiter(Delimiter::BraceRight),
             trimmed.split_at('}'.len_utf8()).1,
         ))),
         (Some(c), _) => {
             if !(c.is_alphanumeric() | (c == '_')) {
-                return Some(Err(ParseTokenError {}));
+                return Err(ParseTokenError {});
             }
             let (token, remainder) = trimmed.split_at(
                 trimmed
                     .find(|f: char| !(f.is_alphanumeric() | (f == '_')))
                     .unwrap_or(trimmed.len()),
             );
-            Some(Ok((
+            Ok(Some((
                 match token {
                     "if" => Token::Keyword(Keyword::If),
                     "else" => Token::Keyword(Keyword::Else),
@@ -165,12 +163,14 @@ impl<'a> Iterator for SplitTokens<'a> {
     type Item = Result<Token<'a>, ParseTokenError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        split_first_token(self.remainder).map(|result| {
-            result.map(|(token, remainder)| {
-                self.remainder = remainder;
-                token
+        split_first_token(self.remainder)
+            .map(|f| {
+                f.map(|(token, remainder)| {
+                    self.remainder = remainder;
+                    token
+                })
             })
-        })
+            .transpose()
     }
 }
 
@@ -188,6 +188,7 @@ fn main() {
         " -45 - 45 + +45",
         "if +2 + -2 else x = x - 5 ",
         "if {{10 / {45 + 3}} + {2 * 4}} - +5",
+        "日本語a+123",
     ]
     .into_iter()
     .for_each(|string| {
