@@ -123,10 +123,7 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
             Token::Delimiter(Delimiter::BraceRight),
             trimmed.split_at('}'.len_utf8()).1,
         ))),
-        (Some(c), _) => {
-            if !(c.is_alphanumeric() | (c == '_')) {
-                return Err(ParseTokenError {});
-            }
+        (Some(c), _) if c.is_alphanumeric() | (c == '_') => {
             let (token, remainder) = trimmed.split_at(
                 trimmed
                     .find(|f: char| !(f.is_alphanumeric() | (f == '_')))
@@ -145,6 +142,7 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                 remainder,
             )))
         }
+        _ => Err(ParseTokenError {}),
     }
 }
 
