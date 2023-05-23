@@ -105,14 +105,10 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                     .map(|(f, _)| f)
                     .unwrap_or(trimmed.len()),
             );
-            Ok(Some((
-                Token::Number(
-                    token
-                        .parse::<i32>()
-                        .map_err(ParseTokenError::ParseIntError)?,
-                ),
-                remainder,
-            )))
+            match token.parse() {
+                Ok(i) => Ok(Some((Token::Number(i), remainder))),
+                Err(e) => Err(ParseTokenError::ParseIntError(e)),
+            }
         }
         (Some('+'), _) => Ok(Some((
             Token::Operator(BinaryOperator::Add),
