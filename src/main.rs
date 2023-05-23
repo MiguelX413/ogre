@@ -1,4 +1,5 @@
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum BinaryOperator {
@@ -68,8 +69,22 @@ pub enum Token<'a> {
     Operator(BinaryOperator),
 }
 
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-pub struct ParseTokenError {}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ParseTokenError {
+    InvalidChar(char),
+    ParseIntError(<i32 as FromStr>::Err),
+}
+
+impl Display for ParseTokenError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvalidChar(c) => write!(f, "Invalid char: {c}"),
+            Self::ParseIntError(e) => write!(f, "Error parsing int: {e}"),
+        }
+    }
+}
+
+impl std::error::Error for ParseTokenError {}
 
 pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTokenError> {
     let trimmed = string.trim();
@@ -91,7 +106,11 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                     .unwrap_or(trimmed.len()),
             );
             Ok(Some((
-                Token::Number(token.parse::<i32>().map_err(|_e| ParseTokenError {})?),
+                Token::Number(
+                    token
+                        .parse::<i32>()
+                        .map_err(ParseTokenError::ParseIntError)?,
+                ),
                 remainder,
             )))
         }
@@ -142,7 +161,7 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                 remainder,
             )))
         }
-        _ => Err(ParseTokenError {}),
+        (Some(c), _) => Err(ParseTokenError::InvalidChar(c)),
     }
 }
 
@@ -187,6 +206,7 @@ fn main() {
         "if +2 + -2 else x = x - 5 ",
         "if {{10 / {45 + 3}} + {2 * 4}} - +5",
         "日本語a+123",
+        "cat- 32432432432432-ref",
     ]
     .into_iter()
     .for_each(|string| {
