@@ -126,9 +126,12 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
             Token::Operator(BinaryOperator::Div, &trimmed[..'/'.len_utf8()]),
             &trimmed['/'.len_utf8()..],
         ))),
-        (Some('='), _) => Ok(Some((
-            Token::Operator(BinaryOperator::Assign, &trimmed[..'='.len_utf8()]),
-            &trimmed['='.len_utf8()..],
+        (Some(':'), Some('=')) => Ok(Some((
+            Token::Operator(
+                BinaryOperator::Assign,
+                &trimmed[..(':'.len_utf8() + '='.len_utf8())],
+            ),
+            &trimmed[(':'.len_utf8() + '='.len_utf8())..],
         ))),
         (Some('{'), _) => Ok(Some((
             Token::Delimiter(Delimiter::BraceLeft, &trimmed[..'{'.len_utf8()]),
@@ -199,7 +202,7 @@ fn main() {
         "catfood&-45",
         "&",
         " -45 - 45 + +45",
-        "if +2 + -2 else x = x - 5 ",
+        "if +2 + -2 else x := x - 5 ",
         "if {{10 / {45 + 3}} + {2 * 4}} - +5",
         "日本語a+123",
         "cat- 32432432432432-ref",
