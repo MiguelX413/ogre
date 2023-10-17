@@ -62,11 +62,11 @@ impl Display for Keyword {
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Token<'a> {
-    Delimiter(Delimiter),
-    Keyword(Keyword),
+    Delimiter(Delimiter, &'a str),
+    Keyword(Keyword, &'a str),
     Name(&'a str),
-    Number(i32),
-    Operator(BinaryOperator),
+    Number(i32, &'a str),
+    Operator(BinaryOperator, &'a str),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -106,36 +106,36 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                     .unwrap_or(trimmed.len()),
             );
             match token.parse() {
-                Ok(i) => Ok(Some((Token::Number(i), remainder))),
+                Ok(i) => Ok(Some((Token::Number(i, token), remainder))),
                 Err(e) => Err(ParseTokenError::ParseIntError(e)),
             }
         }
         (Some('+'), _) => Ok(Some((
-            Token::Operator(BinaryOperator::Add),
+            Token::Operator(BinaryOperator::Add, &trimmed[..'+'.len_utf8()]),
             &trimmed['+'.len_utf8()..],
         ))),
         (Some('-'), _) => Ok(Some((
-            Token::Operator(BinaryOperator::Sub),
+            Token::Operator(BinaryOperator::Sub, &trimmed[..'-'.len_utf8()]),
             &trimmed['-'.len_utf8()..],
         ))),
         (Some('*'), _) => Ok(Some((
-            Token::Operator(BinaryOperator::Mul),
+            Token::Operator(BinaryOperator::Mul, &trimmed[..'*'.len_utf8()]),
             &trimmed['*'.len_utf8()..],
         ))),
         (Some('/'), _) => Ok(Some((
-            Token::Operator(BinaryOperator::Div),
+            Token::Operator(BinaryOperator::Div, &trimmed[..'/'.len_utf8()]),
             &trimmed['/'.len_utf8()..],
         ))),
         (Some('='), _) => Ok(Some((
-            Token::Operator(BinaryOperator::Assign),
+            Token::Operator(BinaryOperator::Assign, &trimmed[..'='.len_utf8()]),
             &trimmed['='.len_utf8()..],
         ))),
         (Some('{'), _) => Ok(Some((
-            Token::Delimiter(Delimiter::BraceLeft),
+            Token::Delimiter(Delimiter::BraceLeft, &trimmed[..'{'.len_utf8()]),
             &trimmed['{'.len_utf8()..],
         ))),
         (Some('}'), _) => Ok(Some((
-            Token::Delimiter(Delimiter::BraceRight),
+            Token::Delimiter(Delimiter::BraceRight, &trimmed[..'}'.len_utf8()]),
             &trimmed['}'.len_utf8()..],
         ))),
         (Some(c), _) if c.is_alphanumeric() | (c == '_') => {
@@ -146,12 +146,12 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
             );
             Ok(Some((
                 match token {
-                    "if" => Token::Keyword(Keyword::If),
-                    "else" => Token::Keyword(Keyword::Else),
-                    "while" => Token::Keyword(Keyword::While),
-                    "loop" => Token::Keyword(Keyword::Loop),
-                    "true" => Token::Keyword(Keyword::True),
-                    "false" => Token::Keyword(Keyword::False),
+                    "if" => Token::Keyword(Keyword::If, token),
+                    "else" => Token::Keyword(Keyword::Else, token),
+                    "while" => Token::Keyword(Keyword::While, token),
+                    "loop" => Token::Keyword(Keyword::Loop, token),
+                    "true" => Token::Keyword(Keyword::True, token),
+                    "false" => Token::Keyword(Keyword::False, token),
                     name => Token::Name(name),
                 },
                 remainder,
