@@ -70,21 +70,21 @@ pub enum Token<'a> {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ParseTokenError {
-    InvalidChar(char),
-    ParseIntError(<i32 as FromStr>::Err),
+pub enum ParseTokenError<'a> {
+    InvalidChar(char, &'a str),
+    ParseIntError(<i32 as FromStr>::Err, &'a str),
 }
 
-impl Display for ParseTokenError {
+impl<'a> Display for ParseTokenError<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InvalidChar(c) => write!(f, "Invalid char: {c}"),
-            Self::ParseIntError(e) => write!(f, "Error parsing int: {e}"),
+            Self::InvalidChar(c, _) => write!(f, "Invalid char: {c}"),
+            Self::ParseIntError(e, _) => write!(f, "Error parsing int: {e}"),
         }
     }
 }
 
-impl std::error::Error for ParseTokenError {}
+impl<'a> std::error::Error for ParseTokenError<'a> {}
 
 pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTokenError> {
     let trimmed = string.trim();
@@ -107,7 +107,7 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
             );
             match token.parse() {
                 Ok(i) => Ok(Some((Token::Number(i, token), remainder))),
-                Err(e) => Err(ParseTokenError::ParseIntError(e)),
+                Err(e) => Err(ParseTokenError::ParseIntError(e, token)),
             }
         }
         (Some('+'), _) => Ok(Some((
@@ -160,23 +160,27 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                 remainder,
             )))
         }
-        (Some(c), _) => Err(ParseTokenError::InvalidChar(c)),
+        (Some(c), _) => Err(ParseTokenError::InvalidChar(c, &trimmed[..c.len_utf8()])),
     }
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SplitTokens<'a> {
     remainder: &'a str,
+    original: &'a str,
 }
 
 impl<'a> SplitTokens<'a> {
     pub fn new(string: &str) -> SplitTokens {
-        SplitTokens { remainder: string }
+        SplitTokens {
+            remainder: string,
+            original: string,
+        }
     }
 }
 
 impl<'a> Iterator for SplitTokens<'a> {
-    type Item = Result<Token<'a>, ParseTokenError>;
+    type Item = Result<Token<'a>, ParseTokenError<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         split_first_token(self.remainder)
