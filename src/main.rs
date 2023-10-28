@@ -66,19 +66,22 @@ impl Display for Keyword {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Token<'a> {
     Delimiter(Delimiter, &'a str),
     Keyword(Keyword, &'a str),
     Name(&'a str),
     Number(i32, &'a str),
     Operator(BinaryOperator, &'a str),
+    String(String, &'a str),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ParseTokenError<'a> {
     InvalidChar(char, &'a str),
     ParseIntError(<i32 as FromStr>::Err, &'a str),
+    UnterminatedString,
+    InvalidEscape(char),
 }
 
 impl<'a> Display for ParseTokenError<'a> {
@@ -86,6 +89,8 @@ impl<'a> Display for ParseTokenError<'a> {
         match self {
             Self::InvalidChar(c, _) => write!(f, "Invalid char: {c}"),
             Self::ParseIntError(e, _) => write!(f, "Error parsing int: {e}"),
+            Self::UnterminatedString => write!(f, "No string terminator found!"),
+            Self::InvalidEscape(c) => write!(f, "Invalid escape \\{c}"),
         }
     }
 }
@@ -108,7 +113,7 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                     .char_indices()
                     .skip(1)
                     .find(|(_, f)| !(f.is_ascii_digit()))
-                    .map(|(f, _)| f)
+                    .map(|(i, _)| i)
                     .unwrap_or(trimmed.len()),
             );
             match token.parse() {
@@ -151,6 +156,56 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
             Token::Delimiter(Delimiter::Semicolon, &trimmed[..';'.len_utf8()]),
             &trimmed[';'.len_utf8()..],
         ))),
+        (Some('"'), _) => {
+            let mut escaped = false;
+            let Some(index) = trimmed
+                .char_indices()
+                .skip(1)
+                .find(|(_, c)| match (c, escaped) {
+                    ('\\', false) => {
+                        escaped = true;
+                        false
+                    }
+                    ('"', false) => true,
+                    (_, true) => {
+                        escaped = false;
+                        false
+                    }
+                    (_, false) => false,
+                })
+                .map(|(i, _)| i)
+            else {
+                return Err(ParseTokenError::UnterminatedString);
+            };
+            let mut escaped = false;
+            match trimmed[1..index]
+                .chars()
+                .filter_map(|c| match (c, escaped) {
+                    ('\\', false) => {
+                        escaped = true;
+                        None
+                    }
+                    (cc, true) => {
+                        escaped = false;
+                        match cc {
+                            '\\' => Some(Ok('\\')),
+                            'n' => Some(Ok('\n')),
+                            't' => Some(Ok('\t')),
+                            '"' => Some(Ok('"')),
+                            ccc => Some(Err(ParseTokenError::InvalidEscape(ccc))),
+                        }
+                    }
+                    (c, false) => Some(Ok(c)),
+                })
+                .collect::<Result<_, _>>()
+            {
+                Ok(string) => Ok(Some((
+                    Token::String(string, &trimmed[..=index]),
+                    &trimmed[index + 1..],
+                ))),
+                Err(e) => Err(e),
+            }
+        }
         (Some(c), _) if c.is_alphanumeric() | (c == '_') => {
             let (token, remainder) = trimmed.split_at(
                 trimmed
@@ -222,6 +277,8 @@ fn main() {
         "if {{10 / {45 + 3}} + {2 * 4}} - +5",
         "日本語a+123",
         "cat- 32432432432432-ref",
+        "let my_string := \"lol\\\"test\";
+let xd := 2;",
     ]
     .into_iter()
     .for_each(|string| {
