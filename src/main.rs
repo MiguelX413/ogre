@@ -26,6 +26,7 @@ impl Display for BinaryOperator {
 pub enum Delimiter {
     BraceLeft,
     BraceRight,
+    Semicolon,
 }
 
 impl Display for Delimiter {
@@ -33,6 +34,7 @@ impl Display for Delimiter {
         match self {
             Self::BraceLeft => write!(f, "{{"),
             Self::BraceRight => write!(f, "}}"),
+            Self::Semicolon => write!(f, ";"),
         }
     }
 }
@@ -45,6 +47,8 @@ pub enum Keyword {
     Loop,
     True,
     False,
+    Let,
+    Type,
 }
 
 impl Display for Keyword {
@@ -56,6 +60,8 @@ impl Display for Keyword {
             Self::Loop => write!(f, "loop"),
             Self::True => write!(f, "true"),
             Self::False => write!(f, "false"),
+            Self::Let => write!(f, "let"),
+            Self::Type => write!(f, "type"),
         }
     }
 }
@@ -141,6 +147,10 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
             Token::Delimiter(Delimiter::BraceRight, &trimmed[..'}'.len_utf8()]),
             &trimmed['}'.len_utf8()..],
         ))),
+        (Some(';'), _) => Ok(Some((
+            Token::Delimiter(Delimiter::Semicolon, &trimmed[..';'.len_utf8()]),
+            &trimmed[';'.len_utf8()..],
+        ))),
         (Some(c), _) if c.is_alphanumeric() | (c == '_') => {
             let (token, remainder) = trimmed.split_at(
                 trimmed
@@ -155,6 +165,8 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                     "loop" => Token::Keyword(Keyword::Loop, token),
                     "true" => Token::Keyword(Keyword::True, token),
                     "false" => Token::Keyword(Keyword::False, token),
+                    "let" => Token::Keyword(Keyword::Let, token),
+                    "type" => Token::Keyword(Keyword::Type, token),
                     name => Token::Name(name),
                 },
                 remainder,
