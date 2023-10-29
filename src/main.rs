@@ -133,234 +133,6 @@ impl<'a> Display for ParseTokenError<'a> {
 
 impl<'a> std::error::Error for ParseTokenError<'a> {}
 
-pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTokenError> {
-    let trimmed = string.trim();
-
-    if trimmed.is_empty() {
-        return Ok(None);
-    }
-
-    let mut chars = trimmed.chars();
-    match (chars.next(), chars.next()) {
-        (None, _) => Ok(None),
-        (Some('0'..='9'), _) | (Some('+' | '-'), Some('0'..='9')) => {
-            let (token, remainder) = trimmed.split_at(
-                trimmed
-                    .char_indices()
-                    .skip(1)
-                    .find(|(_, f)| !(f.is_ascii_digit()))
-                    .map(|(i, _)| i)
-                    .unwrap_or(trimmed.len()),
-            );
-            match token.parse() {
-                Ok(i) => Ok(Some((Token(TokenKind::Number(i), token), remainder))),
-                Err(e) => Err(ParseTokenError::ParseIntError(e, token)),
-            }
-        }
-        (Some('+'), _) => Ok(Some((
-            Token(
-                TokenKind::Operator(BinaryOperator::Add),
-                &trimmed[..'+'.len_utf8()],
-            ),
-            &trimmed['+'.len_utf8()..],
-        ))),
-        (Some('-'), _) => Ok(Some((
-            Token(
-                TokenKind::Operator(BinaryOperator::Sub),
-                &trimmed[..'-'.len_utf8()],
-            ),
-            &trimmed['-'.len_utf8()..],
-        ))),
-        (Some('*'), Some('*')) => Ok(Some((
-            Token(
-                TokenKind::Operator(BinaryOperator::Pow),
-                &trimmed[..('*'.len_utf8() + '*'.len_utf8())],
-            ),
-            &trimmed[('*'.len_utf8() + '*'.len_utf8())..],
-        ))),
-        (Some('*'), _) => Ok(Some((
-            Token(
-                TokenKind::Operator(BinaryOperator::Mul),
-                &trimmed[..'*'.len_utf8()],
-            ),
-            &trimmed['*'.len_utf8()..],
-        ))),
-        (Some('/'), _) => Ok(Some((
-            Token(
-                TokenKind::Operator(BinaryOperator::Div),
-                &trimmed[..'/'.len_utf8()],
-            ),
-            &trimmed['/'.len_utf8()..],
-        ))),
-        (Some('%'), _) => Ok(Some((
-            Token(
-                TokenKind::Operator(BinaryOperator::Mod),
-                &trimmed[..'%'.len_utf8()],
-            ),
-            &trimmed['%'.len_utf8()..],
-        ))),
-        (Some(':'), Some('=')) => Ok(Some((
-            Token(
-                TokenKind::Operator(BinaryOperator::Assign),
-                &trimmed[..(':'.len_utf8() + '='.len_utf8())],
-            ),
-            &trimmed[(':'.len_utf8() + '='.len_utf8())..],
-        ))),
-        (Some('='), Some('=')) => Ok(Some((
-            Token(
-                TokenKind::Operator(BinaryOperator::Eq),
-                &trimmed[..('='.len_utf8() + '='.len_utf8())],
-            ),
-            &trimmed[('='.len_utf8() + '='.len_utf8())..],
-        ))),
-        (Some('!'), Some('=')) => Ok(Some((
-            Token(
-                TokenKind::Operator(BinaryOperator::Ne),
-                &trimmed[..('!'.len_utf8() + '='.len_utf8())],
-            ),
-            &trimmed[('!'.len_utf8() + '='.len_utf8())..],
-        ))),
-        (Some('>'), Some('=')) => Ok(Some((
-            Token(
-                TokenKind::Operator(BinaryOperator::Ge),
-                &trimmed[..('>'.len_utf8() + '='.len_utf8())],
-            ),
-            &trimmed[('>'.len_utf8() + '='.len_utf8())..],
-        ))),
-        (Some('<'), Some('=')) => Ok(Some((
-            Token(
-                TokenKind::Operator(BinaryOperator::Le),
-                &trimmed[..('<'.len_utf8() + '='.len_utf8())],
-            ),
-            &trimmed[('<'.len_utf8() + '='.len_utf8())..],
-        ))),
-        (Some('>'), _) => Ok(Some((
-            Token(
-                TokenKind::Operator(BinaryOperator::Gt),
-                &trimmed[..('>'.len_utf8())],
-            ),
-            &trimmed[('>'.len_utf8())..],
-        ))),
-        (Some('<'), _) => Ok(Some((
-            Token(
-                TokenKind::Operator(BinaryOperator::Lt),
-                &trimmed[..('<'.len_utf8())],
-            ),
-            &trimmed[('<'.len_utf8())..],
-        ))),
-        (Some('{'), _) => Ok(Some((
-            Token(
-                TokenKind::Delimiter(Delimiter::BraceLeft),
-                &trimmed[..'{'.len_utf8()],
-            ),
-            &trimmed['{'.len_utf8()..],
-        ))),
-        (Some('}'), _) => Ok(Some((
-            Token(
-                TokenKind::Delimiter(Delimiter::BraceRight),
-                &trimmed[..'}'.len_utf8()],
-            ),
-            &trimmed['}'.len_utf8()..],
-        ))),
-        (Some(','), _) => Ok(Some((
-            Token(
-                TokenKind::Separator(Separator::Comma),
-                &trimmed[..','.len_utf8()],
-            ),
-            &trimmed[','.len_utf8()..],
-        ))),
-        (Some(':'), _) => Ok(Some((
-            Token(
-                TokenKind::Separator(Separator::Colon),
-                &trimmed[..':'.len_utf8()],
-            ),
-            &trimmed[':'.len_utf8()..],
-        ))),
-        (Some(';'), _) => Ok(Some((
-            Token(
-                TokenKind::Separator(Separator::Semi),
-                &trimmed[..';'.len_utf8()],
-            ),
-            &trimmed[';'.len_utf8()..],
-        ))),
-        (Some('"'), _) => {
-            let mut escaped = false;
-            let Some(index) = trimmed
-                .char_indices()
-                .skip(1)
-                .find(|(_, c)| match (c, escaped) {
-                    ('\\', false) => {
-                        escaped = true;
-                        false
-                    }
-                    ('"', false) => true,
-                    (_, true) => {
-                        escaped = false;
-                        false
-                    }
-                    (_, false) => false,
-                })
-                .map(|(i, _)| i)
-            else {
-                return Err(ParseTokenError::UnterminatedString);
-            };
-            let mut escaped = false;
-            match trimmed[1..index]
-                .chars()
-                .filter_map(|c| match (c, escaped) {
-                    ('\\', false) => {
-                        escaped = true;
-                        None
-                    }
-                    (cc, true) => {
-                        escaped = false;
-                        match cc {
-                            '\\' => Some(Ok('\\')),
-                            'n' => Some(Ok('\n')),
-                            't' => Some(Ok('\t')),
-                            '0' => Some(Ok('\0')),
-                            '"' => Some(Ok('"')),
-                            '\'' => Some(Ok('\'')),
-                            ccc => Some(Err(ParseTokenError::InvalidEscape(ccc))),
-                        }
-                    }
-                    (c, false) => Some(Ok(c)),
-                })
-                .collect::<Result<_, _>>()
-            {
-                Ok(string) => Ok(Some((
-                    Token(TokenKind::String(string), &trimmed[..=index]),
-                    &trimmed[index + 1..],
-                ))),
-                Err(e) => Err(e),
-            }
-        }
-        (Some(c), _) if c.is_alphabetic() | (c == '_') => {
-            let (token, remainder) = trimmed.split_at(
-                trimmed
-                    .find(|f: char| !(f.is_alphanumeric() | (f == '_')))
-                    .unwrap_or(trimmed.len()),
-            );
-            Ok(Some((
-                match token {
-                    "if" => Token(TokenKind::Keyword(Keyword::If), token),
-                    "else" => Token(TokenKind::Keyword(Keyword::Else), token),
-                    "while" => Token(TokenKind::Keyword(Keyword::While), token),
-                    "loop" => Token(TokenKind::Keyword(Keyword::Loop), token),
-                    "true" => Token(TokenKind::Keyword(Keyword::True), token),
-                    "false" => Token(TokenKind::Keyword(Keyword::False), token),
-                    "let" => Token(TokenKind::Keyword(Keyword::Let), token),
-                    "type" => Token(TokenKind::Keyword(Keyword::Type), token),
-                    ttype if c.is_uppercase() => Token(TokenKind::Type, ttype),
-                    name => Token(TokenKind::Name, name),
-                },
-                remainder,
-            )))
-        }
-        (Some(c), _) => Err(ParseTokenError::InvalidChar(c, &trimmed[..c.len_utf8()])),
-    }
-}
-
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SplitTokens<'a> {
     remainder: &'a str,
@@ -380,14 +152,239 @@ impl<'a> Iterator for SplitTokens<'a> {
     type Item = Result<Token<'a>, ParseTokenError<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        split_first_token(self.remainder)
-            .map(|f| {
-                f.map(|(token, remainder)| {
-                    self.remainder = remainder;
-                    token
-                })
+        let trimmed = self.remainder.trim();
+
+        if trimmed.is_empty() {
+            return None;
+        }
+
+        let mut chars = trimmed.chars();
+        let result = match (chars.next()?, chars.next()) {
+            ('0'..='9', _) | ('+' | '-', Some('0'..='9')) => {
+                let (token, remainder) = trimmed.split_at(
+                    trimmed
+                        .char_indices()
+                        .skip(1)
+                        .find(|(_, f)| !(f.is_ascii_digit()))
+                        .map(|(i, _)| i)
+                        .unwrap_or(trimmed.len()),
+                );
+                match token.parse() {
+                    Ok(i) => Some(Ok((Token(TokenKind::Number(i), token), remainder))),
+                    Err(e) => Some(Err(ParseTokenError::ParseIntError(e, token))),
+                }
+            }
+            ('+', _) => Some(Ok((
+                Token(
+                    TokenKind::Operator(BinaryOperator::Add),
+                    &trimmed[..'+'.len_utf8()],
+                ),
+                &trimmed['+'.len_utf8()..],
+            ))),
+            ('-', _) => Some(Ok((
+                Token(
+                    TokenKind::Operator(BinaryOperator::Sub),
+                    &trimmed[..'-'.len_utf8()],
+                ),
+                &trimmed['-'.len_utf8()..],
+            ))),
+            ('*', Some('*')) => Some(Ok((
+                Token(
+                    TokenKind::Operator(BinaryOperator::Pow),
+                    &trimmed[..('*'.len_utf8() + '*'.len_utf8())],
+                ),
+                &trimmed[('*'.len_utf8() + '*'.len_utf8())..],
+            ))),
+            ('*', _) => Some(Ok((
+                Token(
+                    TokenKind::Operator(BinaryOperator::Mul),
+                    &trimmed[..'*'.len_utf8()],
+                ),
+                &trimmed['*'.len_utf8()..],
+            ))),
+            ('/', _) => Some(Ok((
+                Token(
+                    TokenKind::Operator(BinaryOperator::Div),
+                    &trimmed[..'/'.len_utf8()],
+                ),
+                &trimmed['/'.len_utf8()..],
+            ))),
+            ('%', _) => Some(Ok((
+                Token(
+                    TokenKind::Operator(BinaryOperator::Mod),
+                    &trimmed[..'%'.len_utf8()],
+                ),
+                &trimmed['%'.len_utf8()..],
+            ))),
+            (':', Some('=')) => Some(Ok((
+                Token(
+                    TokenKind::Operator(BinaryOperator::Assign),
+                    &trimmed[..(':'.len_utf8() + '='.len_utf8())],
+                ),
+                &trimmed[(':'.len_utf8() + '='.len_utf8())..],
+            ))),
+            ('=', Some('=')) => Some(Ok((
+                Token(
+                    TokenKind::Operator(BinaryOperator::Eq),
+                    &trimmed[..('='.len_utf8() + '='.len_utf8())],
+                ),
+                &trimmed[('='.len_utf8() + '='.len_utf8())..],
+            ))),
+            ('!', Some('=')) => Some(Ok((
+                Token(
+                    TokenKind::Operator(BinaryOperator::Ne),
+                    &trimmed[..('!'.len_utf8() + '='.len_utf8())],
+                ),
+                &trimmed[('!'.len_utf8() + '='.len_utf8())..],
+            ))),
+            ('>', Some('=')) => Some(Ok((
+                Token(
+                    TokenKind::Operator(BinaryOperator::Ge),
+                    &trimmed[..('>'.len_utf8() + '='.len_utf8())],
+                ),
+                &trimmed[('>'.len_utf8() + '='.len_utf8())..],
+            ))),
+            ('<', Some('=')) => Some(Ok((
+                Token(
+                    TokenKind::Operator(BinaryOperator::Le),
+                    &trimmed[..('<'.len_utf8() + '='.len_utf8())],
+                ),
+                &trimmed[('<'.len_utf8() + '='.len_utf8())..],
+            ))),
+            ('>', _) => Some(Ok((
+                Token(
+                    TokenKind::Operator(BinaryOperator::Gt),
+                    &trimmed[..('>'.len_utf8())],
+                ),
+                &trimmed[('>'.len_utf8())..],
+            ))),
+            ('<', _) => Some(Ok((
+                Token(
+                    TokenKind::Operator(BinaryOperator::Lt),
+                    &trimmed[..('<'.len_utf8())],
+                ),
+                &trimmed[('<'.len_utf8())..],
+            ))),
+            ('{', _) => Some(Ok((
+                Token(
+                    TokenKind::Delimiter(Delimiter::BraceLeft),
+                    &trimmed[..'{'.len_utf8()],
+                ),
+                &trimmed['{'.len_utf8()..],
+            ))),
+            ('}', _) => Some(Ok((
+                Token(
+                    TokenKind::Delimiter(Delimiter::BraceRight),
+                    &trimmed[..'}'.len_utf8()],
+                ),
+                &trimmed['}'.len_utf8()..],
+            ))),
+            (',', _) => Some(Ok((
+                Token(
+                    TokenKind::Separator(Separator::Comma),
+                    &trimmed[..','.len_utf8()],
+                ),
+                &trimmed[','.len_utf8()..],
+            ))),
+            (':', _) => Some(Ok((
+                Token(
+                    TokenKind::Separator(Separator::Colon),
+                    &trimmed[..':'.len_utf8()],
+                ),
+                &trimmed[':'.len_utf8()..],
+            ))),
+            (';', _) => Some(Ok((
+                Token(
+                    TokenKind::Separator(Separator::Semi),
+                    &trimmed[..';'.len_utf8()],
+                ),
+                &trimmed[';'.len_utf8()..],
+            ))),
+            ('"', _) => {
+                let mut escaped = false;
+                let Some(index) = trimmed
+                    .char_indices()
+                    .skip(1)
+                    .find(|(_, c)| match (c, escaped) {
+                        ('\\', false) => {
+                            escaped = true;
+                            false
+                        }
+                        ('"', false) => true,
+                        (_, true) => {
+                            escaped = false;
+                            false
+                        }
+                        (_, false) => false,
+                    })
+                    .map(|(i, _)| i)
+                else {
+                    return Some(Err(ParseTokenError::UnterminatedString));
+                };
+                let mut escaped = false;
+                match trimmed[1..index]
+                    .chars()
+                    .filter_map(|c| match (c, escaped) {
+                        ('\\', false) => {
+                            escaped = true;
+                            None
+                        }
+                        (cc, true) => {
+                            escaped = false;
+                            match cc {
+                                '\\' => Some(Ok('\\')),
+                                'n' => Some(Ok('\n')),
+                                't' => Some(Ok('\t')),
+                                '0' => Some(Ok('\0')),
+                                '"' => Some(Ok('"')),
+                                '\'' => Some(Ok('\'')),
+                                ccc => Some(Err(ParseTokenError::InvalidEscape(ccc))),
+                            }
+                        }
+                        (c, false) => Some(Ok(c)),
+                    })
+                    .collect::<Result<_, _>>()
+                {
+                    Ok(string) => Some(Ok((
+                        Token(TokenKind::String(string), &trimmed[..=index]),
+                        &trimmed[index + 1..],
+                    ))),
+                    Err(e) => Some(Err(e)),
+                }
+            }
+            (c, _) if c.is_alphabetic() | (c == '_') => {
+                let (token, remainder) = trimmed.split_at(
+                    trimmed
+                        .find(|f: char| !(f.is_alphanumeric() | (f == '_')))
+                        .unwrap_or(trimmed.len()),
+                );
+                Some(Ok((
+                    match token {
+                        "if" => Token(TokenKind::Keyword(Keyword::If), token),
+                        "else" => Token(TokenKind::Keyword(Keyword::Else), token),
+                        "while" => Token(TokenKind::Keyword(Keyword::While), token),
+                        "loop" => Token(TokenKind::Keyword(Keyword::Loop), token),
+                        "true" => Token(TokenKind::Keyword(Keyword::True), token),
+                        "false" => Token(TokenKind::Keyword(Keyword::False), token),
+                        "let" => Token(TokenKind::Keyword(Keyword::Let), token),
+                        "type" => Token(TokenKind::Keyword(Keyword::Type), token),
+                        ttype if c.is_uppercase() => Token(TokenKind::Type, ttype),
+                        name => Token(TokenKind::Name, name),
+                    },
+                    remainder,
+                )))
+            }
+            (c, _) => Some(Err(ParseTokenError::InvalidChar(
+                c,
+                &trimmed[..c.len_utf8()],
+            ))),
+        };
+        result.map(|f| {
+            f.map(|(token, remainder)| {
+                self.remainder = remainder;
+                token
             })
-            .transpose()
+        })
     }
 }
 
