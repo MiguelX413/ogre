@@ -425,18 +425,17 @@ impl<'a> Iterator for SplitTokens<'a> {
             }
             (c, _) if c.is_alphabetic() | (c == '_') => {
                 let mut is_mmacro = false;
-                let split_index = match trimmed
-                    .char_indices()
-                    .find(|&(_, c)| !(c.is_alphanumeric() | (c == '_')))
-                {
-                    Some((i, '!')) if c.is_uppercase() => {
-                        is_mmacro = true;
-                        i + 1
-                    }
-                    Some((i, _)) => i,
-                    None => trimmed.len(),
-                };
-                let (token, remainder) = trimmed.split_at(split_index);
+                let (token, remainder) = trimmed.split_at(
+                    trimmed
+                        .find(|c| match (c, is_mmacro) {
+                            ('!', false) => {
+                                is_mmacro = true;
+                                false
+                            }
+                            (cc, _) => !(cc.is_alphanumeric() | (cc == '_')),
+                        })
+                        .unwrap_or(trimmed.len()),
+                );
                 Some(Ok((
                     match token {
                         "if" => Token(TokenKind::Keyword(Keyword::If), token),
