@@ -131,6 +131,19 @@ impl Display for Arrow {
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Dot {
+    Dot,
+}
+
+impl Display for Dot {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Dot => write!(f, "."),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Token<'a>(TokenKind, &'a str);
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -141,9 +154,11 @@ pub enum TokenKind {
     Keyword(Keyword),
     Name,
     Type,
+    Macro,
     Number(i32),
     String(String),
     Arrow(Arrow),
+    Dot(Dot),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -332,6 +347,7 @@ impl<'a> Iterator for SplitTokens<'a> {
             (',', _) => symbol_token((',', None), TokenKind::Separator(Separator::Comma), trimmed),
             (':', _) => symbol_token((':', None), TokenKind::Separator(Separator::Colon), trimmed),
             (';', _) => symbol_token((';', None), TokenKind::Separator(Separator::Semi), trimmed),
+            ('.', _) => symbol_token(('.', None), TokenKind::Dot(Dot::Dot), trimmed),
             ('"', _) => {
                 let mut escaped = false;
                 let Some(index) = trimmed
@@ -385,11 +401,19 @@ impl<'a> Iterator for SplitTokens<'a> {
                 }
             }
             (c, _) if c.is_alphabetic() | (c == '_') => {
-                let (token, remainder) = trimmed.split_at(
-                    trimmed
-                        .find(|f: char| !(f.is_alphanumeric() | (f == '_')))
-                        .unwrap_or(trimmed.len()),
-                );
+                let mut is_mmacro = false;
+                let split_index = match trimmed
+                    .char_indices()
+                    .find(|&(_, c)| !(c.is_alphanumeric() | (c == '_')))
+                {
+                    Some((i, '!')) if c.is_uppercase() => {
+                        is_mmacro = true;
+                        i + 1
+                    }
+                    Some((i, _)) => i,
+                    None => trimmed.len(),
+                };
+                let (token, remainder) = trimmed.split_at(split_index);
                 Some(Ok((
                     match token {
                         "if" => Token(TokenKind::Keyword(Keyword::If), token),
@@ -403,6 +427,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                         "return" => Token(TokenKind::Keyword(Keyword::Return), token),
                         "gen" => Token(TokenKind::Keyword(Keyword::Gen), token),
                         "func" => Token(TokenKind::Keyword(Keyword::Func), token),
+                        mmacro if is_mmacro => Token(TokenKind::Macro, mmacro),
                         ttype if c.is_uppercase() => Token(TokenKind::Type, ttype),
                         name => Token(TokenKind::Name, name),
                     },
