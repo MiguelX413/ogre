@@ -40,15 +40,23 @@ impl Display for BinaryOperator {
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Delimiter {
-    BraceLeft,
-    BraceRight,
+    CurlyLeft,
+    CurlyRight,
+    SquareLeft,
+    SquareRight,
+    ParLeft,
+    ParRight,
 }
 
 impl Display for Delimiter {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::BraceLeft => write!(f, "{{"),
-            Self::BraceRight => write!(f, "}}"),
+            Self::CurlyLeft => write!(f, "{{"),
+            Self::CurlyRight => write!(f, "}}"),
+            Self::SquareLeft => write!(f, "["),
+            Self::SquareRight => write!(f, "]"),
+            Self::ParLeft => write!(f, "("),
+            Self::ParRight => write!(f, ")"),
         }
     }
 }
@@ -279,12 +287,32 @@ impl<'a> Iterator for SplitTokens<'a> {
             ),
             ('{', _) => symbol_token(
                 ('{', None),
-                TokenKind::Delimiter(Delimiter::BraceLeft),
+                TokenKind::Delimiter(Delimiter::CurlyLeft),
                 trimmed,
             ),
             ('}', _) => symbol_token(
                 ('}', None),
-                TokenKind::Delimiter(Delimiter::BraceRight),
+                TokenKind::Delimiter(Delimiter::CurlyRight),
+                trimmed,
+            ),
+            ('[', _) => symbol_token(
+                ('[', None),
+                TokenKind::Delimiter(Delimiter::SquareLeft),
+                trimmed,
+            ),
+            (']', _) => symbol_token(
+                (']', None),
+                TokenKind::Delimiter(Delimiter::SquareRight),
+                trimmed,
+            ),
+            ('(', _) => symbol_token(
+                ('(', None),
+                TokenKind::Delimiter(Delimiter::ParLeft),
+                trimmed,
+            ),
+            (')', _) => symbol_token(
+                (')', None),
+                TokenKind::Delimiter(Delimiter::ParRight),
                 trimmed,
             ),
             (',', _) => symbol_token((',', None), TokenKind::Separator(Separator::Comma), trimmed),
