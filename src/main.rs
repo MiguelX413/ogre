@@ -115,7 +115,13 @@ impl Display for Keyword {
     }
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Comment {
+    Comment,
+    DocComment,
+}
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Arrow {
     RArrow,
     FatArrow,
@@ -130,7 +136,7 @@ impl Display for Arrow {
     }
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Dot {
     Dot,
 }
@@ -155,6 +161,7 @@ pub enum TokenKind {
     Name,
     Type,
     Macro,
+    Comment(Comment),
     Number(i32),
     String(String),
     Arrow(Arrow),
@@ -238,6 +245,22 @@ impl<'a> Iterator for SplitTokens<'a> {
             }
             ('=', Some(('>', _))) => {
                 symbol_token(('=', Some('>')), TokenKind::Arrow(Arrow::FatArrow), trimmed)
+            }
+            ('/', Some(('/', Some('/')))) => {
+                let (token, remainder) =
+                    trimmed.split_at(trimmed.find('\n').unwrap_or(trimmed.len()));
+                Some(Ok((
+                    Token(TokenKind::Comment(Comment::DocComment), token),
+                    remainder,
+                )))
+            }
+            ('/', Some(('/', _))) => {
+                let (token, remainder) =
+                    trimmed.split_at(trimmed.find('\n').unwrap_or(trimmed.len()));
+                Some(Ok((
+                    Token(TokenKind::Comment(Comment::Comment), token),
+                    remainder,
+                )))
             }
             ('+', _) => symbol_token(
                 ('+', None),
