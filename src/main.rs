@@ -428,6 +428,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                 let (token, remainder) = trimmed.split_at(
                     trimmed
                         .find(|c| match (c, is_mmacro) {
+                            (_, true) => true,
                             ('!', false) => {
                                 is_mmacro = true;
                                 false
