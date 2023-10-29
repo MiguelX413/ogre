@@ -6,7 +6,9 @@ pub enum BinaryOperator {
     Add,
     Sub,
     Mul,
+    Pow,
     Div,
+    Mod,
     Assign,
 }
 
@@ -16,7 +18,9 @@ impl Display for BinaryOperator {
             Self::Add => write!(f, "+"),
             Self::Sub => write!(f, "-"),
             Self::Mul => write!(f, "*"),
+            Self::Pow => write!(f, "**"),
             Self::Div => write!(f, "/"),
+            Self::Mod => write!(f, "/"),
             Self::Assign => write!(f, "="),
         }
     }
@@ -129,6 +133,13 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
             Token::Operator(BinaryOperator::Sub, &trimmed[..'-'.len_utf8()]),
             &trimmed['-'.len_utf8()..],
         ))),
+        (Some('*'), Some('*')) => Ok(Some((
+            Token::Operator(
+                BinaryOperator::Pow,
+                &trimmed[..('*'.len_utf8() + '*'.len_utf8())],
+            ),
+            &trimmed[('*'.len_utf8() + '*'.len_utf8())..],
+        ))),
         (Some('*'), _) => Ok(Some((
             Token::Operator(BinaryOperator::Mul, &trimmed[..'*'.len_utf8()]),
             &trimmed['*'.len_utf8()..],
@@ -136,6 +147,10 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
         (Some('/'), _) => Ok(Some((
             Token::Operator(BinaryOperator::Div, &trimmed[..'/'.len_utf8()]),
             &trimmed['/'.len_utf8()..],
+        ))),
+        (Some('%'), _) => Ok(Some((
+            Token::Operator(BinaryOperator::Mod, &trimmed[..'%'.len_utf8()]),
+            &trimmed['%'.len_utf8()..],
         ))),
         (Some(':'), Some('=')) => Ok(Some((
             Token::Operator(
@@ -277,6 +292,7 @@ fn main() {
         "if {{10 / {45 + 3}} + {2 * 4}} - +5",
         "日本語a+123",
         "cat- 32432432432432-ref",
+        "{2133 ** 21} % 2",
         "let my_string := \"lol\\\"test\";
 let xd := 2;",
     ]
