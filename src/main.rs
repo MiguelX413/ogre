@@ -86,6 +86,7 @@ impl Display for Separator {
 pub enum Keyword {
     If,
     Else,
+    Match,
     While,
     Loop,
     True,
@@ -102,6 +103,7 @@ impl Display for Keyword {
         match self {
             Self::If => write!(f, "if"),
             Self::Else => write!(f, "else"),
+            Self::Match => write!(f, "match"),
             Self::While => write!(f, "while"),
             Self::Loop => write!(f, "loop"),
             Self::True => write!(f, "true"),
@@ -441,6 +443,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                     match token {
                         "if" => Token(TokenKind::Keyword(Keyword::If), token),
                         "else" => Token(TokenKind::Keyword(Keyword::Else), token),
+                        "match" => Token(TokenKind::Keyword(Keyword::Match), token),
                         "while" => Token(TokenKind::Keyword(Keyword::While), token),
                         "loop" => Token(TokenKind::Keyword(Keyword::Loop), token),
                         "true" => Token(TokenKind::Keyword(Keyword::True), token),
