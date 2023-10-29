@@ -1,6 +1,11 @@
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
+const _: () = assert!(std::mem::size_of::<*const u8>() == std::mem::size_of::<usize>());
+fn substr_index(s: &str, substr: &str) -> usize {
+    substr.as_ptr() as usize - s.as_ptr() as usize
+}
+
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum BinaryOperator {
     Add,
@@ -151,8 +156,46 @@ impl Display for Dot {
     }
 }
 
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub struct LineColumn {
+    pub line: usize,
+    pub column: usize,
+}
+
+impl LineColumn {
+    pub fn new(line: usize, column: usize) -> Self {
+        Self { line, column }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub struct Span {
+    pub start: LineColumn,
+    pub end: LineColumn,
+}
+
+impl Span {
+    pub fn new(start: LineColumn, end: LineColumn) -> Self {
+        Self { start, end }
+    }
+}
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct Token<'a>(TokenKind, &'a str);
+pub struct Token<'a> {
+    pub token_kind: TokenKind,
+    pub str: &'a str,
+    pub span: Span,
+}
+
+impl<'a> Token<'a> {
+    pub fn new(token_kind: TokenKind, str: &'a str, span: Span) -> Self {
+        Self {
+            token_kind,
+            str,
+            span,
+        }
+    }
+}
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum TokenKind {
@@ -195,6 +238,7 @@ impl<'a> std::error::Error for ParseTokenError<'a> {}
 pub struct SplitTokens<'a> {
     remainder: &'a str,
     original: &'a str,
+    line_column: LineColumn,
 }
 
 impl<'a> SplitTokens<'a> {
@@ -202,6 +246,7 @@ impl<'a> SplitTokens<'a> {
         SplitTokens {
             remainder: string,
             original: string,
+            line_column: LineColumn::new(0, 0),
         }
     }
 }
@@ -211,16 +256,35 @@ fn symbol_token<E>(
     chars: (char, Option<char>),
     token_kind: TokenKind,
     s: &str,
+    line_column: LineColumn,
 ) -> Option<Result<(Token, &str), E>> {
     let len = chars.0.len_utf8() + chars.1.map(char::len_utf8).unwrap_or(0);
-    Some(Ok((Token(token_kind, &s[..len]), &s[len..])))
+    Some(Ok((
+        Token::new(
+            token_kind,
+            &s[..len],
+            Span::new(
+                line_column,
+                LineColumn::new(line_column.line, line_column.column + len),
+            ),
+        ),
+        &s[len..],
+    )))
 }
 
 impl<'a> Iterator for SplitTokens<'a> {
     type Item = Result<Token<'a>, ParseTokenError<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let trimmed = self.remainder.trim();
+        let trimmed = self.remainder.trim_start_matches(|c: char| {
+            if c == '\n' {
+                self.line_column.line += 1;
+                self.line_column.column = 0;
+            } else {
+                self.line_column.column += usize::from(c.is_whitespace());
+            }
+            c.is_whitespace()
+        });
 
         if trimmed.is_empty() {
             return None;
@@ -238,21 +302,50 @@ impl<'a> Iterator for SplitTokens<'a> {
                         .unwrap_or(trimmed.len()),
                 );
                 match token.parse() {
-                    Ok(i) => Some(Ok((Token(TokenKind::Number(i), token), remainder))),
+                    Ok(i) => Some(Ok((
+                        Token::new(
+                            TokenKind::Number(i),
+                            token,
+                            Span::new(
+                                self.line_column,
+                                LineColumn::new(
+                                    self.line_column.line,
+                                    self.line_column.column + token.len(),
+                                ),
+                            ),
+                        ),
+                        remainder,
+                    ))),
                     Err(e) => Some(Err(ParseTokenError::ParseIntError(e, token))),
                 }
             }
-            ('-', Some(('>', _))) => {
-                symbol_token(('-', Some('>')), TokenKind::Arrow(Arrow::RArrow), trimmed)
-            }
-            ('=', Some(('>', _))) => {
-                symbol_token(('=', Some('>')), TokenKind::Arrow(Arrow::FatArrow), trimmed)
-            }
+            ('-', Some(('>', _))) => symbol_token(
+                ('-', Some('>')),
+                TokenKind::Arrow(Arrow::RArrow),
+                trimmed,
+                self.line_column,
+            ),
+            ('=', Some(('>', _))) => symbol_token(
+                ('=', Some('>')),
+                TokenKind::Arrow(Arrow::FatArrow),
+                trimmed,
+                self.line_column,
+            ),
             ('/', Some(('/', Some('/')))) => {
                 let (token, remainder) =
                     trimmed.split_at(trimmed.find('\n').unwrap_or(trimmed.len()));
                 Some(Ok((
-                    Token(TokenKind::Comment(Comment::DocComment), token),
+                    Token::new(
+                        TokenKind::Comment(Comment::DocComment),
+                        token,
+                        Span::new(
+                            self.line_column,
+                            LineColumn::new(
+                                self.line_column.line,
+                                self.line_column.column + token.len(),
+                            ),
+                        ),
+                    ),
                     remainder,
                 )))
             }
@@ -260,7 +353,17 @@ impl<'a> Iterator for SplitTokens<'a> {
                 let (token, remainder) =
                     trimmed.split_at(trimmed.find('\n').unwrap_or(trimmed.len()));
                 Some(Ok((
-                    Token(TokenKind::Comment(Comment::Comment), token),
+                    Token::new(
+                        TokenKind::Comment(Comment::Comment),
+                        token,
+                        Span::new(
+                            self.line_column,
+                            LineColumn::new(
+                                self.line_column.line,
+                                self.line_column.column + token.len(),
+                            ),
+                        ),
+                    ),
                     remainder,
                 )))
             }
@@ -268,112 +371,154 @@ impl<'a> Iterator for SplitTokens<'a> {
                 ('+', None),
                 TokenKind::Operator(BinaryOperator::Add),
                 trimmed,
+                self.line_column,
             ),
             ('-', _) => symbol_token(
                 ('-', None),
                 TokenKind::Operator(BinaryOperator::Sub),
                 trimmed,
+                self.line_column,
             ),
             ('*', Some(('*', _))) => symbol_token(
                 ('*', Some('*')),
                 TokenKind::Operator(BinaryOperator::Pow),
                 trimmed,
+                self.line_column,
             ),
             ('*', _) => symbol_token(
                 ('*', None),
                 TokenKind::Operator(BinaryOperator::Mul),
                 trimmed,
+                self.line_column,
             ),
             ('/', _) => symbol_token(
                 ('/', None),
                 TokenKind::Operator(BinaryOperator::Div),
                 trimmed,
+                self.line_column,
             ),
             ('%', _) => symbol_token(
                 ('%', None),
                 TokenKind::Operator(BinaryOperator::Mod),
                 trimmed,
+                self.line_column,
             ),
             (':', Some(('=', _))) => symbol_token(
                 (':', Some('=')),
                 TokenKind::Operator(BinaryOperator::Assign),
                 trimmed,
+                self.line_column,
             ),
             ('=', Some(('=', _))) => symbol_token(
                 ('=', Some('=')),
                 TokenKind::Operator(BinaryOperator::Eq),
                 trimmed,
+                self.line_column,
             ),
             ('!', Some(('=', _))) => symbol_token(
                 ('!', Some('=')),
                 TokenKind::Operator(BinaryOperator::Ne),
                 trimmed,
+                self.line_column,
             ),
             ('>', Some(('=', _))) => symbol_token(
                 ('>', Some('=')),
                 TokenKind::Operator(BinaryOperator::Ge),
                 trimmed,
+                self.line_column,
             ),
             ('<', Some(('=', _))) => symbol_token(
                 ('<', Some('=')),
                 TokenKind::Operator(BinaryOperator::Le),
                 trimmed,
+                self.line_column,
             ),
             ('>', _) => symbol_token(
                 ('>', None),
                 TokenKind::Operator(BinaryOperator::Gt),
                 trimmed,
+                self.line_column,
             ),
             ('<', _) => symbol_token(
                 ('<', None),
                 TokenKind::Operator(BinaryOperator::Lt),
                 trimmed,
+                self.line_column,
             ),
             ('|', _) => symbol_token(
                 ('|', None),
                 TokenKind::Operator(BinaryOperator::Or),
                 trimmed,
+                self.line_column,
             ),
             ('&', _) => symbol_token(
                 ('&', None),
                 TokenKind::Operator(BinaryOperator::And),
                 trimmed,
+                self.line_column,
             ),
             ('{', _) => symbol_token(
                 ('{', None),
                 TokenKind::Delimiter(Delimiter::CurlyLeft),
                 trimmed,
+                self.line_column,
             ),
             ('}', _) => symbol_token(
                 ('}', None),
                 TokenKind::Delimiter(Delimiter::CurlyRight),
                 trimmed,
+                self.line_column,
             ),
             ('[', _) => symbol_token(
                 ('[', None),
                 TokenKind::Delimiter(Delimiter::SquareLeft),
                 trimmed,
+                self.line_column,
             ),
             (']', _) => symbol_token(
                 (']', None),
                 TokenKind::Delimiter(Delimiter::SquareRight),
                 trimmed,
+                self.line_column,
             ),
             ('(', _) => symbol_token(
                 ('(', None),
                 TokenKind::Delimiter(Delimiter::ParLeft),
                 trimmed,
+                self.line_column,
             ),
             (')', _) => symbol_token(
                 (')', None),
                 TokenKind::Delimiter(Delimiter::ParRight),
                 trimmed,
+                self.line_column,
             ),
-            (',', _) => symbol_token((',', None), TokenKind::Separator(Separator::Comma), trimmed),
-            (':', _) => symbol_token((':', None), TokenKind::Separator(Separator::Colon), trimmed),
-            (';', _) => symbol_token((';', None), TokenKind::Separator(Separator::Semi), trimmed),
-            ('.', _) => symbol_token(('.', None), TokenKind::Dot(Dot::Dot), trimmed),
+            (',', _) => symbol_token(
+                (',', None),
+                TokenKind::Separator(Separator::Comma),
+                trimmed,
+                self.line_column,
+            ),
+            (':', _) => symbol_token(
+                (':', None),
+                TokenKind::Separator(Separator::Colon),
+                trimmed,
+                self.line_column,
+            ),
+            (';', _) => symbol_token(
+                (';', None),
+                TokenKind::Separator(Separator::Semi),
+                trimmed,
+                self.line_column,
+            ),
+            ('.', _) => symbol_token(
+                ('.', None),
+                TokenKind::Dot(Dot::Dot),
+                trimmed,
+                self.line_column,
+            ),
             ('"', _) => {
+                let mut line_column = self.line_column;
                 let mut escaped = false;
                 let Some(index) = trimmed
                     .char_indices()
@@ -416,10 +561,26 @@ impl<'a> Iterator for SplitTokens<'a> {
                         }
                         (c, false) => Some(Ok(c)),
                     })
+                    .map(|r| {
+                        r.map(|c| {
+                            match c {
+                                '\n' => {
+                                    line_column.line += 1;
+                                    line_column.column = 0;
+                                }
+                                _ => line_column.column += 1,
+                            };
+                            c
+                        })
+                    })
                     .collect::<Result<_, _>>()
                 {
                     Ok(string) => Some(Ok((
-                        Token(TokenKind::String(string), &trimmed[..=index]),
+                        Token::new(
+                            TokenKind::String(string),
+                            &trimmed[..=index],
+                            Span::new(self.line_column, line_column),
+                        ),
                         &trimmed[index + 1..],
                     ))),
                     Err(e) => Some(Err(e)),
@@ -443,23 +604,33 @@ impl<'a> Iterator for SplitTokens<'a> {
                     .unwrap_or(trimmed.len()),
                 );
                 Some(Ok((
-                    match token {
-                        "if" => Token(TokenKind::Keyword(Keyword::If), token),
-                        "else" => Token(TokenKind::Keyword(Keyword::Else), token),
-                        "match" => Token(TokenKind::Keyword(Keyword::Match), token),
-                        "while" => Token(TokenKind::Keyword(Keyword::While), token),
-                        "loop" => Token(TokenKind::Keyword(Keyword::Loop), token),
-                        "true" => Token(TokenKind::Keyword(Keyword::True), token),
-                        "false" => Token(TokenKind::Keyword(Keyword::False), token),
-                        "let" => Token(TokenKind::Keyword(Keyword::Let), token),
-                        "type" => Token(TokenKind::Keyword(Keyword::Type), token),
-                        "return" => Token(TokenKind::Keyword(Keyword::Return), token),
-                        "gen" => Token(TokenKind::Keyword(Keyword::Gen), token),
-                        "func" => Token(TokenKind::Keyword(Keyword::Func), token),
-                        mmacro if is_macro => Token(TokenKind::Macro, mmacro),
-                        ttype if c.is_uppercase() => Token(TokenKind::Type, ttype),
-                        name => Token(TokenKind::Name, name),
-                    },
+                    Token::new(
+                        match token {
+                            "if" => TokenKind::Keyword(Keyword::If),
+                            "else" => TokenKind::Keyword(Keyword::Else),
+                            "match" => TokenKind::Keyword(Keyword::Match),
+                            "while" => TokenKind::Keyword(Keyword::While),
+                            "loop" => TokenKind::Keyword(Keyword::Loop),
+                            "true" => TokenKind::Keyword(Keyword::True),
+                            "false" => TokenKind::Keyword(Keyword::False),
+                            "let" => TokenKind::Keyword(Keyword::Let),
+                            "type" => TokenKind::Keyword(Keyword::Type),
+                            "return" => TokenKind::Keyword(Keyword::Return),
+                            "gen" => TokenKind::Keyword(Keyword::Gen),
+                            "func" => TokenKind::Keyword(Keyword::Func),
+                            _ if is_macro => TokenKind::Macro,
+                            _ if c.is_uppercase() => TokenKind::Type,
+                            _ => TokenKind::Name,
+                        },
+                        token,
+                        Span::new(
+                            self.line_column,
+                            token.chars().fold(self.line_column, |acc, f| match f {
+                                '\n' => LineColumn::new(acc.line + 1, 0),
+                                _ => LineColumn::new(acc.line, acc.column + 1),
+                            }),
+                        ),
+                    ),
                     remainder,
                 )))
             }
@@ -470,6 +641,7 @@ impl<'a> Iterator for SplitTokens<'a> {
         };
         result.map(|f| {
             f.map(|(token, remainder)| {
+                self.line_column = token.span.end;
                 self.remainder = remainder;
                 token
             })
@@ -500,7 +672,7 @@ let xd := 2;",
     .into_iter()
     .for_each(|string| {
         println!(
-            "{string:?}: {:?}",
+            "{string:?}: {:?}\n",
             split_tokens(string).collect::<Result<Vec<_>, _>>()
         )
     });
