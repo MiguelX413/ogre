@@ -291,7 +291,7 @@ impl<'a> Iterator for SplitTokens<'a> {
         }
 
         let mut chars = trimmed.chars();
-        let result = match (chars.next()?, chars.next().map(|c| (c, chars.next()))) {
+        match (chars.next()?, chars.next().map(|c| (c, chars.next()))) {
             ('0'..='9', _) | ('+' | '-', Some(('0'..='9', _))) => {
                 let (token, remainder) = trimmed.split_at(
                     trimmed
@@ -638,8 +638,8 @@ impl<'a> Iterator for SplitTokens<'a> {
                 c,
                 &trimmed[..c.len_utf8()],
             ))),
-        };
-        result.map(|f| {
+        }
+        .map(|f| {
             f.map(|(token, remainder)| {
                 self.line_column = token.span.end;
                 self.remainder = remainder;
@@ -653,7 +653,7 @@ pub fn split_tokens(string: &str) -> SplitTokens {
     SplitTokens::new(string)
 }
 
-fn main() {
+pub fn main() {
     [
         "catfood-45",
         "catfood",
