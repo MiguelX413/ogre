@@ -148,6 +148,16 @@ impl<'a> SplitTokens<'a> {
     }
 }
 
+#[inline]
+fn symbol_token<E>(
+    chars: (char, Option<char>),
+    token_kind: TokenKind,
+    s: &str,
+) -> Option<Result<(Token, &str), E>> {
+    let len = chars.0.len_utf8() + chars.1.map(char::len_utf8).unwrap_or(0);
+    Some(Ok((Token(token_kind, &s[..len]), &s[len..])))
+}
+
 impl<'a> Iterator for SplitTokens<'a> {
     type Item = Result<Token<'a>, ParseTokenError<'a>>;
 
@@ -174,132 +184,84 @@ impl<'a> Iterator for SplitTokens<'a> {
                     Err(e) => Some(Err(ParseTokenError::ParseIntError(e, token))),
                 }
             }
-            ('+', _) => Some(Ok((
-                Token(
-                    TokenKind::Operator(BinaryOperator::Add),
-                    &trimmed[..'+'.len_utf8()],
-                ),
-                &trimmed['+'.len_utf8()..],
-            ))),
-            ('-', _) => Some(Ok((
-                Token(
-                    TokenKind::Operator(BinaryOperator::Sub),
-                    &trimmed[..'-'.len_utf8()],
-                ),
-                &trimmed['-'.len_utf8()..],
-            ))),
-            ('*', Some('*')) => Some(Ok((
-                Token(
-                    TokenKind::Operator(BinaryOperator::Pow),
-                    &trimmed[..('*'.len_utf8() + '*'.len_utf8())],
-                ),
-                &trimmed[('*'.len_utf8() + '*'.len_utf8())..],
-            ))),
-            ('*', _) => Some(Ok((
-                Token(
-                    TokenKind::Operator(BinaryOperator::Mul),
-                    &trimmed[..'*'.len_utf8()],
-                ),
-                &trimmed['*'.len_utf8()..],
-            ))),
-            ('/', _) => Some(Ok((
-                Token(
-                    TokenKind::Operator(BinaryOperator::Div),
-                    &trimmed[..'/'.len_utf8()],
-                ),
-                &trimmed['/'.len_utf8()..],
-            ))),
-            ('%', _) => Some(Ok((
-                Token(
-                    TokenKind::Operator(BinaryOperator::Mod),
-                    &trimmed[..'%'.len_utf8()],
-                ),
-                &trimmed['%'.len_utf8()..],
-            ))),
-            (':', Some('=')) => Some(Ok((
-                Token(
-                    TokenKind::Operator(BinaryOperator::Assign),
-                    &trimmed[..(':'.len_utf8() + '='.len_utf8())],
-                ),
-                &trimmed[(':'.len_utf8() + '='.len_utf8())..],
-            ))),
-            ('=', Some('=')) => Some(Ok((
-                Token(
-                    TokenKind::Operator(BinaryOperator::Eq),
-                    &trimmed[..('='.len_utf8() + '='.len_utf8())],
-                ),
-                &trimmed[('='.len_utf8() + '='.len_utf8())..],
-            ))),
-            ('!', Some('=')) => Some(Ok((
-                Token(
-                    TokenKind::Operator(BinaryOperator::Ne),
-                    &trimmed[..('!'.len_utf8() + '='.len_utf8())],
-                ),
-                &trimmed[('!'.len_utf8() + '='.len_utf8())..],
-            ))),
-            ('>', Some('=')) => Some(Ok((
-                Token(
-                    TokenKind::Operator(BinaryOperator::Ge),
-                    &trimmed[..('>'.len_utf8() + '='.len_utf8())],
-                ),
-                &trimmed[('>'.len_utf8() + '='.len_utf8())..],
-            ))),
-            ('<', Some('=')) => Some(Ok((
-                Token(
-                    TokenKind::Operator(BinaryOperator::Le),
-                    &trimmed[..('<'.len_utf8() + '='.len_utf8())],
-                ),
-                &trimmed[('<'.len_utf8() + '='.len_utf8())..],
-            ))),
-            ('>', _) => Some(Ok((
-                Token(
-                    TokenKind::Operator(BinaryOperator::Gt),
-                    &trimmed[..('>'.len_utf8())],
-                ),
-                &trimmed[('>'.len_utf8())..],
-            ))),
-            ('<', _) => Some(Ok((
-                Token(
-                    TokenKind::Operator(BinaryOperator::Lt),
-                    &trimmed[..('<'.len_utf8())],
-                ),
-                &trimmed[('<'.len_utf8())..],
-            ))),
-            ('{', _) => Some(Ok((
-                Token(
-                    TokenKind::Delimiter(Delimiter::BraceLeft),
-                    &trimmed[..'{'.len_utf8()],
-                ),
-                &trimmed['{'.len_utf8()..],
-            ))),
-            ('}', _) => Some(Ok((
-                Token(
-                    TokenKind::Delimiter(Delimiter::BraceRight),
-                    &trimmed[..'}'.len_utf8()],
-                ),
-                &trimmed['}'.len_utf8()..],
-            ))),
-            (',', _) => Some(Ok((
-                Token(
-                    TokenKind::Separator(Separator::Comma),
-                    &trimmed[..','.len_utf8()],
-                ),
-                &trimmed[','.len_utf8()..],
-            ))),
-            (':', _) => Some(Ok((
-                Token(
-                    TokenKind::Separator(Separator::Colon),
-                    &trimmed[..':'.len_utf8()],
-                ),
-                &trimmed[':'.len_utf8()..],
-            ))),
-            (';', _) => Some(Ok((
-                Token(
-                    TokenKind::Separator(Separator::Semi),
-                    &trimmed[..';'.len_utf8()],
-                ),
-                &trimmed[';'.len_utf8()..],
-            ))),
+            ('+', _) => symbol_token(
+                ('+', None),
+                TokenKind::Operator(BinaryOperator::Add),
+                trimmed,
+            ),
+            ('-', _) => symbol_token(
+                ('-', None),
+                TokenKind::Operator(BinaryOperator::Sub),
+                trimmed,
+            ),
+            ('*', Some('*')) => symbol_token(
+                ('*', Some('*')),
+                TokenKind::Operator(BinaryOperator::Pow),
+                trimmed,
+            ),
+            ('*', _) => symbol_token(
+                ('*', None),
+                TokenKind::Operator(BinaryOperator::Mul),
+                trimmed,
+            ),
+            ('/', _) => symbol_token(
+                ('/', None),
+                TokenKind::Operator(BinaryOperator::Div),
+                trimmed,
+            ),
+            ('%', _) => symbol_token(
+                ('%', None),
+                TokenKind::Operator(BinaryOperator::Mod),
+                trimmed,
+            ),
+            (':', Some('=')) => symbol_token(
+                (':', Some('=')),
+                TokenKind::Operator(BinaryOperator::Assign),
+                trimmed,
+            ),
+            ('=', Some('=')) => symbol_token(
+                ('=', Some('=')),
+                TokenKind::Operator(BinaryOperator::Eq),
+                trimmed,
+            ),
+            ('!', Some('=')) => symbol_token(
+                ('!', Some('=')),
+                TokenKind::Operator(BinaryOperator::Ne),
+                trimmed,
+            ),
+            ('>', Some('=')) => symbol_token(
+                ('>', Some('=')),
+                TokenKind::Operator(BinaryOperator::Ge),
+                trimmed,
+            ),
+            ('<', Some('=')) => symbol_token(
+                ('<', Some('=')),
+                TokenKind::Operator(BinaryOperator::Le),
+                trimmed,
+            ),
+            ('>', _) => symbol_token(
+                ('>', None),
+                TokenKind::Operator(BinaryOperator::Gt),
+                trimmed,
+            ),
+            ('<', _) => symbol_token(
+                ('<', None),
+                TokenKind::Operator(BinaryOperator::Lt),
+                trimmed,
+            ),
+            ('{', _) => symbol_token(
+                ('{', None),
+                TokenKind::Delimiter(Delimiter::BraceLeft),
+                trimmed,
+            ),
+            ('}', _) => symbol_token(
+                ('}', None),
+                TokenKind::Delimiter(Delimiter::BraceRight),
+                trimmed,
+            ),
+            (',', _) => symbol_token((',', None), TokenKind::Separator(Separator::Comma), trimmed),
+            (':', _) => symbol_token((':', None), TokenKind::Separator(Separator::Colon), trimmed),
+            (';', _) => symbol_token((';', None), TokenKind::Separator(Separator::Semi), trimmed),
             ('"', _) => {
                 let mut escaped = false;
                 let Some(index) = trimmed
