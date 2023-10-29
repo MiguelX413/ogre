@@ -71,13 +71,16 @@ impl Display for Keyword {
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub enum Token<'a> {
-    Delimiter(Delimiter, &'a str),
-    Keyword(Keyword, &'a str),
-    Name(&'a str),
-    Number(i32, &'a str),
-    Operator(BinaryOperator, &'a str),
-    String(String, &'a str),
+pub struct Token<'a>(TokenKind, &'a str);
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub enum TokenKind {
+    Delimiter(Delimiter),
+    Keyword(Keyword),
+    Name,
+    Number(i32),
+    Operator(BinaryOperator),
+    String(String),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -121,54 +124,78 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                     .unwrap_or(trimmed.len()),
             );
             match token.parse() {
-                Ok(i) => Ok(Some((Token::Number(i, token), remainder))),
+                Ok(i) => Ok(Some((Token(TokenKind::Number(i), token), remainder))),
                 Err(e) => Err(ParseTokenError::ParseIntError(e, token)),
             }
         }
         (Some('+'), _) => Ok(Some((
-            Token::Operator(BinaryOperator::Add, &trimmed[..'+'.len_utf8()]),
+            Token(
+                TokenKind::Operator(BinaryOperator::Add),
+                &trimmed[..'+'.len_utf8()],
+            ),
             &trimmed['+'.len_utf8()..],
         ))),
         (Some('-'), _) => Ok(Some((
-            Token::Operator(BinaryOperator::Sub, &trimmed[..'-'.len_utf8()]),
+            Token(
+                TokenKind::Operator(BinaryOperator::Sub),
+                &trimmed[..'-'.len_utf8()],
+            ),
             &trimmed['-'.len_utf8()..],
         ))),
         (Some('*'), Some('*')) => Ok(Some((
-            Token::Operator(
-                BinaryOperator::Pow,
+            Token(
+                TokenKind::Operator(BinaryOperator::Pow),
                 &trimmed[..('*'.len_utf8() + '*'.len_utf8())],
             ),
             &trimmed[('*'.len_utf8() + '*'.len_utf8())..],
         ))),
         (Some('*'), _) => Ok(Some((
-            Token::Operator(BinaryOperator::Mul, &trimmed[..'*'.len_utf8()]),
+            Token(
+                TokenKind::Operator(BinaryOperator::Mul),
+                &trimmed[..'*'.len_utf8()],
+            ),
             &trimmed['*'.len_utf8()..],
         ))),
         (Some('/'), _) => Ok(Some((
-            Token::Operator(BinaryOperator::Div, &trimmed[..'/'.len_utf8()]),
+            Token(
+                TokenKind::Operator(BinaryOperator::Div),
+                &trimmed[..'/'.len_utf8()],
+            ),
             &trimmed['/'.len_utf8()..],
         ))),
         (Some('%'), _) => Ok(Some((
-            Token::Operator(BinaryOperator::Mod, &trimmed[..'%'.len_utf8()]),
+            Token(
+                TokenKind::Operator(BinaryOperator::Mod),
+                &trimmed[..'%'.len_utf8()],
+            ),
             &trimmed['%'.len_utf8()..],
         ))),
         (Some(':'), Some('=')) => Ok(Some((
-            Token::Operator(
-                BinaryOperator::Assign,
+            Token(
+                TokenKind::Operator(BinaryOperator::Assign),
                 &trimmed[..(':'.len_utf8() + '='.len_utf8())],
             ),
             &trimmed[(':'.len_utf8() + '='.len_utf8())..],
         ))),
         (Some('{'), _) => Ok(Some((
-            Token::Delimiter(Delimiter::BraceLeft, &trimmed[..'{'.len_utf8()]),
+            Token(
+                TokenKind::Delimiter(Delimiter::BraceLeft),
+                &trimmed[..'{'.len_utf8()],
+            ),
             &trimmed['{'.len_utf8()..],
         ))),
         (Some('}'), _) => Ok(Some((
-            Token::Delimiter(Delimiter::BraceRight, &trimmed[..'}'.len_utf8()]),
+            Token(
+                TokenKind::Delimiter(Delimiter::BraceRight),
+                &trimmed[..'}'.len_utf8()],
+            ),
             &trimmed['}'.len_utf8()..],
         ))),
         (Some(';'), _) => Ok(Some((
-            Token::Delimiter(Delimiter::Semicolon, &trimmed[..';'.len_utf8()]),
+            Token(
+                TokenKind::Delimiter(Delimiter::Semicolon),
+                &trimmed[..';'.len_utf8()],
+            ),
             &trimmed[';'.len_utf8()..],
         ))),
         (Some('"'), _) => {
@@ -215,7 +242,7 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                 .collect::<Result<_, _>>()
             {
                 Ok(string) => Ok(Some((
-                    Token::String(string, &trimmed[..=index]),
+                    Token(TokenKind::String(string), &trimmed[..=index]),
                     &trimmed[index + 1..],
                 ))),
                 Err(e) => Err(e),
@@ -229,15 +256,15 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
             );
             Ok(Some((
                 match token {
-                    "if" => Token::Keyword(Keyword::If, token),
-                    "else" => Token::Keyword(Keyword::Else, token),
-                    "while" => Token::Keyword(Keyword::While, token),
-                    "loop" => Token::Keyword(Keyword::Loop, token),
-                    "true" => Token::Keyword(Keyword::True, token),
-                    "false" => Token::Keyword(Keyword::False, token),
-                    "let" => Token::Keyword(Keyword::Let, token),
-                    "type" => Token::Keyword(Keyword::Type, token),
-                    name => Token::Name(name),
+                    "if" => Token(TokenKind::Keyword(Keyword::If), token),
+                    "else" => Token(TokenKind::Keyword(Keyword::Else), token),
+                    "while" => Token(TokenKind::Keyword(Keyword::While), token),
+                    "loop" => Token(TokenKind::Keyword(Keyword::Loop), token),
+                    "true" => Token(TokenKind::Keyword(Keyword::True), token),
+                    "false" => Token(TokenKind::Keyword(Keyword::False), token),
+                    "let" => Token(TokenKind::Keyword(Keyword::Let), token),
+                    "type" => Token(TokenKind::Keyword(Keyword::Type), token),
+                    name => Token(TokenKind::Name, name),
                 },
                 remainder,
             )))
