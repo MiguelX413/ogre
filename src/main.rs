@@ -10,6 +10,12 @@ pub enum BinaryOperator {
     Div,
     Mod,
     Assign,
+    Eq,
+    Ne,
+    Gt,
+    Lt,
+    Ge,
+    Le,
 }
 
 impl Display for BinaryOperator {
@@ -22,6 +28,12 @@ impl Display for BinaryOperator {
             Self::Div => write!(f, "/"),
             Self::Mod => write!(f, "/"),
             Self::Assign => write!(f, "="),
+            Self::Eq => write!(f, "=="),
+            Self::Ne => write!(f, "!="),
+            Self::Gt => write!(f, ">"),
+            Self::Lt => write!(f, "<"),
+            Self::Ge => write!(f, ">="),
+            Self::Le => write!(f, "<="),
         }
     }
 }
@@ -193,6 +205,48 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                 &trimmed[..(':'.len_utf8() + '='.len_utf8())],
             ),
             &trimmed[(':'.len_utf8() + '='.len_utf8())..],
+        ))),
+        (Some('='), Some('=')) => Ok(Some((
+            Token(
+                TokenKind::Operator(BinaryOperator::Eq),
+                &trimmed[..('='.len_utf8() + '='.len_utf8())],
+            ),
+            &trimmed[('='.len_utf8() + '='.len_utf8())..],
+        ))),
+        (Some('!'), Some('=')) => Ok(Some((
+            Token(
+                TokenKind::Operator(BinaryOperator::Ne),
+                &trimmed[..('!'.len_utf8() + '='.len_utf8())],
+            ),
+            &trimmed[('!'.len_utf8() + '='.len_utf8())..],
+        ))),
+        (Some('>'), Some('=')) => Ok(Some((
+            Token(
+                TokenKind::Operator(BinaryOperator::Ge),
+                &trimmed[..('>'.len_utf8() + '='.len_utf8())],
+            ),
+            &trimmed[('>'.len_utf8() + '='.len_utf8())..],
+        ))),
+        (Some('<'), Some('=')) => Ok(Some((
+            Token(
+                TokenKind::Operator(BinaryOperator::Le),
+                &trimmed[..('<'.len_utf8() + '='.len_utf8())],
+            ),
+            &trimmed[('<'.len_utf8() + '='.len_utf8())..],
+        ))),
+        (Some('>'), _) => Ok(Some((
+            Token(
+                TokenKind::Operator(BinaryOperator::Gt),
+                &trimmed[..('>'.len_utf8())],
+            ),
+            &trimmed[('>'.len_utf8())..],
+        ))),
+        (Some('<'), _) => Ok(Some((
+            Token(
+                TokenKind::Operator(BinaryOperator::Lt),
+                &trimmed[..('<'.len_utf8())],
+            ),
+            &trimmed[('<'.len_utf8())..],
         ))),
         (Some('{'), _) => Ok(Some((
             Token(
