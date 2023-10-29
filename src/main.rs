@@ -16,6 +16,8 @@ pub enum BinaryOperator {
     Lt,
     Ge,
     Le,
+    Or,
+    And,
 }
 
 impl Display for BinaryOperator {
@@ -34,6 +36,8 @@ impl Display for BinaryOperator {
             Self::Lt => write!(f, "<"),
             Self::Ge => write!(f, ">="),
             Self::Le => write!(f, "<="),
+            Self::Or => write!(f, "|"),
+            Self::And => write!(f, "&"),
         }
     }
 }
@@ -283,6 +287,16 @@ impl<'a> Iterator for SplitTokens<'a> {
             ('<', _) => symbol_token(
                 ('<', None),
                 TokenKind::Operator(BinaryOperator::Lt),
+                trimmed,
+            ),
+            ('|', _) => symbol_token(
+                ('|', None),
+                TokenKind::Operator(BinaryOperator::Or),
+                trimmed,
+            ),
+            ('&', _) => symbol_token(
+                ('&', None),
+                TokenKind::Operator(BinaryOperator::And),
                 trimmed,
             ),
             ('{', _) => symbol_token(
