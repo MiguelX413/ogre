@@ -104,6 +104,21 @@ impl Display for Keyword {
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Arrow {
+    RArrow,
+    FatArrow,
+}
+
+impl Display for Arrow {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::RArrow => write!(f, "->"),
+            Self::FatArrow => write!(f, "=>"),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Token<'a>(TokenKind, &'a str);
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -116,6 +131,7 @@ pub enum TokenKind {
     Type,
     Number(i32),
     String(String),
+    Arrow(Arrow),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -189,6 +205,12 @@ impl<'a> Iterator for SplitTokens<'a> {
                     Ok(i) => Some(Ok((Token(TokenKind::Number(i), token), remainder))),
                     Err(e) => Some(Err(ParseTokenError::ParseIntError(e, token))),
                 }
+            }
+            ('-', Some('>')) => {
+                symbol_token(('-', Some('>')), TokenKind::Arrow(Arrow::RArrow), trimmed)
+            }
+            ('=', Some('>')) => {
+                symbol_token(('=', Some('>')), TokenKind::Arrow(Arrow::FatArrow), trimmed)
             }
             ('+', _) => symbol_token(
                 ('+', None),
