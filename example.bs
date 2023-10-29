@@ -1,0 +1,64 @@
+type Pos_int := {i: Int | i >= 0}; //there will be no primitive unsigned integer type but will perhaps be in the core library
+
+//demonstration of functions being anonymous by default
+let sum_even_positives := (lst)=> {
+	return lst
+        .filter((i: Int) => {i % 2 == 0})
+        .fold(0, (acc: Int, i: Int ) => {acc + i});
+}
+
+let sum_even_positives: (func([Pos_int]) -> Int) := (lst)=> { //same function but explicitly typed!
+	return lst
+        .filter((i: Int) => {i % 2 == 0})
+        .fold(0, (acc: Int, i: Int ) => {acc + i});
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//demonstrating generics
+gen (T: type);  //enumerated types
+type Perhaps := {
+    Exist<T> | None;
+}
+
+gen (T: type); //product types
+type Binary_tree{
+    None | (Node<T> & Left: Binary_tree & Right: Binary_tree);
+}
+gen (T: type);
+let search := (lst, targ) =>{ //inferred as type func([T], T) -> perhaps<int>
+    i: Int := 0;
+    while i < lst.size(){
+        if lst[i] == targ{
+            return Exist<i>;
+        }
+    }
+    return None;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+let do_thing := () => {
+    let i: Int := 0;
+    while Int < 10{
+       print!("among us");  //! denotes macros
+       i := i.succ();
+    }
+}
+
+let main := () => {
+    assert_eq!(do_thing, ()); //true
+    assert_eq!(|-5|, 5)
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////4
+
+let get_tree_height := (tree) =>{
+    if tree == None{
+        return 0
+    }else{
+        return math.bigger(get_tree_height(tree.Left),get_tree_height(tree.Right));
+    }
+}
+
+
+
