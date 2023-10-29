@@ -235,6 +235,7 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                             't' => Some(Ok('\t')),
                             '0' => Some(Ok('\0')),
                             '"' => Some(Ok('"')),
+                            '\'' => Some(Ok('\'')),
                             ccc => Some(Err(ParseTokenError::InvalidEscape(ccc))),
                         }
                     }
