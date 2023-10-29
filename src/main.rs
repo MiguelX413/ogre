@@ -426,18 +426,21 @@ impl<'a> Iterator for SplitTokens<'a> {
                 }
             }
             (c, _) if c.is_alphabetic() | (c == '_') => {
-                let mut is_mmacro = false;
+                let mut is_macro = false;
                 let (token, remainder) = trimmed.split_at(
-                    trimmed
-                        .find(|c| match (c, is_mmacro) {
+                    if c.is_uppercase() {
+                        trimmed.find(|c: char| !(c.is_alphanumeric() | (c == '_')))
+                    } else {
+                        trimmed.find(|c| match (c, is_macro) {
                             (_, true) => true,
                             ('!', false) => {
-                                is_mmacro = true;
+                                is_macro = true;
                                 false
                             }
                             (cc, _) => !(cc.is_alphanumeric() | (cc == '_')),
                         })
-                        .unwrap_or(trimmed.len()),
+                    }
+                    .unwrap_or(trimmed.len()),
                 );
                 Some(Ok((
                     match token {
@@ -453,7 +456,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                         "return" => Token(TokenKind::Keyword(Keyword::Return), token),
                         "gen" => Token(TokenKind::Keyword(Keyword::Gen), token),
                         "func" => Token(TokenKind::Keyword(Keyword::Func), token),
-                        mmacro if is_mmacro => Token(TokenKind::Macro, mmacro),
+                        mmacro if is_macro => Token(TokenKind::Macro, mmacro),
                         ttype if c.is_uppercase() => Token(TokenKind::Type, ttype),
                         name => Token(TokenKind::Name, name),
                     },
