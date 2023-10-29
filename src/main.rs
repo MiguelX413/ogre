@@ -218,8 +218,8 @@ impl<'a> Iterator for SplitTokens<'a> {
         }
 
         let mut chars = trimmed.chars();
-        let result = match (chars.next()?, chars.next()) {
-            ('0'..='9', _) | ('+' | '-', Some('0'..='9')) => {
+        let result = match (chars.next()?, chars.next().map(|c| (c, chars.next()))) {
+            ('0'..='9', _) | ('+' | '-', Some(('0'..='9', _))) => {
                 let (token, remainder) = trimmed.split_at(
                     trimmed
                         .char_indices()
@@ -233,10 +233,10 @@ impl<'a> Iterator for SplitTokens<'a> {
                     Err(e) => Some(Err(ParseTokenError::ParseIntError(e, token))),
                 }
             }
-            ('-', Some('>')) => {
+            ('-', Some(('>', _))) => {
                 symbol_token(('-', Some('>')), TokenKind::Arrow(Arrow::RArrow), trimmed)
             }
-            ('=', Some('>')) => {
+            ('=', Some(('>', _))) => {
                 symbol_token(('=', Some('>')), TokenKind::Arrow(Arrow::FatArrow), trimmed)
             }
             ('+', _) => symbol_token(
@@ -249,7 +249,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                 TokenKind::Operator(BinaryOperator::Sub),
                 trimmed,
             ),
-            ('*', Some('*')) => symbol_token(
+            ('*', Some(('*', _))) => symbol_token(
                 ('*', Some('*')),
                 TokenKind::Operator(BinaryOperator::Pow),
                 trimmed,
@@ -269,27 +269,27 @@ impl<'a> Iterator for SplitTokens<'a> {
                 TokenKind::Operator(BinaryOperator::Mod),
                 trimmed,
             ),
-            (':', Some('=')) => symbol_token(
+            (':', Some(('=', _))) => symbol_token(
                 (':', Some('=')),
                 TokenKind::Operator(BinaryOperator::Assign),
                 trimmed,
             ),
-            ('=', Some('=')) => symbol_token(
+            ('=', Some(('=', _))) => symbol_token(
                 ('=', Some('=')),
                 TokenKind::Operator(BinaryOperator::Eq),
                 trimmed,
             ),
-            ('!', Some('=')) => symbol_token(
+            ('!', Some(('=', _))) => symbol_token(
                 ('!', Some('=')),
                 TokenKind::Operator(BinaryOperator::Ne),
                 trimmed,
             ),
-            ('>', Some('=')) => symbol_token(
+            ('>', Some(('=', _))) => symbol_token(
                 ('>', Some('=')),
                 TokenKind::Operator(BinaryOperator::Ge),
                 trimmed,
             ),
-            ('<', Some('=')) => symbol_token(
+            ('<', Some(('=', _))) => symbol_token(
                 ('<', Some('=')),
                 TokenKind::Operator(BinaryOperator::Le),
                 trimmed,
