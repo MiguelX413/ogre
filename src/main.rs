@@ -80,6 +80,9 @@ pub enum Keyword {
     False,
     Let,
     Type,
+    Return,
+    Gen,
+    Func,
 }
 
 impl Display for Keyword {
@@ -93,6 +96,9 @@ impl Display for Keyword {
             Self::False => write!(f, "false"),
             Self::Let => write!(f, "let"),
             Self::Type => write!(f, "type"),
+            Self::Return => write!(f, "return"),
+            Self::Gen => write!(f, "gen"),
+            Self::Func => write!(f, "func"),
         }
     }
 }
@@ -330,6 +336,9 @@ impl<'a> Iterator for SplitTokens<'a> {
                         "false" => Token(TokenKind::Keyword(Keyword::False), token),
                         "let" => Token(TokenKind::Keyword(Keyword::Let), token),
                         "type" => Token(TokenKind::Keyword(Keyword::Type), token),
+                        "return" => Token(TokenKind::Keyword(Keyword::Return), token),
+                        "gen" => Token(TokenKind::Keyword(Keyword::Gen), token),
+                        "func" => Token(TokenKind::Keyword(Keyword::Func), token),
                         ttype if c.is_uppercase() => Token(TokenKind::Type, ttype),
                         name => Token(TokenKind::Name, name),
                     },
