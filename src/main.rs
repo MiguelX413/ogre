@@ -78,6 +78,7 @@ pub enum TokenKind {
     Delimiter(Delimiter),
     Keyword(Keyword),
     Name,
+    Type,
     Number(i32),
     Operator(BinaryOperator),
     String(String),
@@ -250,7 +251,7 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                 Err(e) => Err(e),
             }
         }
-        (Some(c), _) if c.is_alphanumeric() | (c == '_') => {
+        (Some(c), _) if c.is_alphabetic() | (c == '_') => {
             let (token, remainder) = trimmed.split_at(
                 trimmed
                     .find(|f: char| !(f.is_alphanumeric() | (f == '_')))
@@ -266,6 +267,7 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
                     "false" => Token(TokenKind::Keyword(Keyword::False), token),
                     "let" => Token(TokenKind::Keyword(Keyword::Let), token),
                     "type" => Token(TokenKind::Keyword(Keyword::Type), token),
+                    ttype if c.is_uppercase() => Token(TokenKind::Type, ttype),
                     name => Token(TokenKind::Name, name),
                 },
                 remainder,
