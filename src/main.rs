@@ -30,7 +30,6 @@ impl Display for BinaryOperator {
 pub enum Delimiter {
     BraceLeft,
     BraceRight,
-    Semicolon,
 }
 
 impl Display for Delimiter {
@@ -38,7 +37,23 @@ impl Display for Delimiter {
         match self {
             Self::BraceLeft => write!(f, "{{"),
             Self::BraceRight => write!(f, "}}"),
-            Self::Semicolon => write!(f, ";"),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Separator {
+    Comma,
+    Colon,
+    Semi,
+}
+
+impl Display for Separator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Comma => write!(f, ","),
+            Self::Colon => write!(f, ":"),
+            Self::Semi => write!(f, ";"),
         }
     }
 }
@@ -75,12 +90,13 @@ pub struct Token<'a>(TokenKind, &'a str);
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum TokenKind {
+    Operator(BinaryOperator),
     Delimiter(Delimiter),
+    Separator(Separator),
     Keyword(Keyword),
     Name,
     Type,
     Number(i32),
-    Operator(BinaryOperator),
     String(String),
 }
 
@@ -192,9 +208,23 @@ pub fn split_first_token(string: &str) -> Result<Option<(Token, &str)>, ParseTok
             ),
             &trimmed['}'.len_utf8()..],
         ))),
+        (Some(','), _) => Ok(Some((
+            Token(
+                TokenKind::Separator(Separator::Comma),
+                &trimmed[..','.len_utf8()],
+            ),
+            &trimmed[','.len_utf8()..],
+        ))),
+        (Some(':'), _) => Ok(Some((
+            Token(
+                TokenKind::Separator(Separator::Colon),
+                &trimmed[..':'.len_utf8()],
+            ),
+            &trimmed[':'.len_utf8()..],
+        ))),
         (Some(';'), _) => Ok(Some((
             Token(
-                TokenKind::Delimiter(Delimiter::Semicolon),
+                TokenKind::Separator(Separator::Semi),
                 &trimmed[..';'.len_utf8()],
             ),
             &trimmed[';'.len_utf8()..],
