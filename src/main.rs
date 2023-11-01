@@ -29,7 +29,7 @@ impl Display for BinaryOperator {
             Self::Pow => write!(f, "**"),
             Self::Div => write!(f, "/"),
             Self::Mod => write!(f, "/"),
-            Self::Assign => write!(f, "="),
+            Self::Assign => write!(f, ":="),
             Self::Eq => write!(f, "=="),
             Self::Ne => write!(f, "!="),
             Self::Gt => write!(f, ">"),
