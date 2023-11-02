@@ -20,7 +20,19 @@ impl<'a> SplitTokens<'a> {
     }
 }
 
-macro_rules! symbol_token {
+macro_rules! sp {
+    ($char:literal) => {
+        ($char, _)
+    };
+    ($char1:literal, $char2:literal) => {
+        ($char1, Some(($char2, _)))
+    };
+    ($char1:literal, $char2:literal, $char3:literal) => {
+        ($char1, Some(($char2, Some($char3))))
+    };
+}
+
+macro_rules! st {
     ($char:literal, $token_kind:expr, $remainder:expr) => {{
         const CHAR: char = $char;
         const LEN: usize = CHAR.len_utf8();
@@ -70,13 +82,9 @@ impl<'a> Iterator for SplitTokens<'a> {
                     Err(e) => Some(Err(ParseTokenError::ParseIntError(e, token))),
                 }
             }
-            ('-', Some(('>', _))) => {
-                symbol_token!('-', '>', TokenKind::Arrow(Arrow::RArrow), trimmed)
-            }
-            ('=', Some(('>', _))) => {
-                symbol_token!('=', '>', TokenKind::Arrow(Arrow::FatArrow), &trimmed)
-            }
-            ('/', Some(('/', Some('/')))) => {
+            sp!('-', '>') => st!('-', '>', TokenKind::Arrow(Arrow::RArrow), trimmed),
+            sp!('=', '>') => st!('=', '>', TokenKind::Arrow(Arrow::FatArrow), &trimmed),
+            sp!('/', '/', '/') => {
                 let (token, remainder) =
                     trimmed.split_at(trimmed.find('\n').unwrap_or(trimmed.len()));
                 Some(Ok((
@@ -84,7 +92,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                     remainder,
                 )))
             }
-            ('/', Some(('/', _))) => {
+            sp!('/', '/') => {
                 let (token, remainder) =
                     trimmed.split_at(trimmed.find('\n').unwrap_or(trimmed.len()));
                 Some(Ok((
@@ -92,46 +100,36 @@ impl<'a> Iterator for SplitTokens<'a> {
                     remainder,
                 )))
             }
-            ('+', _) => symbol_token!('+', TokenKind::Operator(BinaryOperator::Add), trimmed),
-            ('-', _) => symbol_token!('-', TokenKind::Operator(BinaryOperator::Sub), trimmed),
-            ('*', Some(('*', _))) => {
-                symbol_token!('*', '*', TokenKind::Operator(BinaryOperator::Pow), trimmed)
-            }
-            ('*', _) => symbol_token!('*', TokenKind::Operator(BinaryOperator::Mul), trimmed),
-            ('/', _) => symbol_token!('/', TokenKind::Operator(BinaryOperator::Div), trimmed),
-            ('%', _) => symbol_token!('%', TokenKind::Operator(BinaryOperator::Mod), trimmed),
-            (':', Some(('=', _))) => symbol_token!(
+            sp!('+') => st!('+', TokenKind::Operator(BinaryOperator::Add), trimmed),
+            sp!('-') => st!('-', TokenKind::Operator(BinaryOperator::Sub), trimmed),
+            sp!('*', '*') => st!('*', '*', TokenKind::Operator(BinaryOperator::Pow), trimmed),
+            sp!('*') => st!('*', TokenKind::Operator(BinaryOperator::Mul), trimmed),
+            sp!('/') => st!('/', TokenKind::Operator(BinaryOperator::Div), trimmed),
+            sp!('%') => st!('%', TokenKind::Operator(BinaryOperator::Mod), trimmed),
+            sp!(':', '=') => st!(
                 ':',
                 '=',
                 TokenKind::Operator(BinaryOperator::Assign),
                 trimmed
             ),
-            ('=', Some(('=', _))) => {
-                symbol_token!('=', '=', TokenKind::Operator(BinaryOperator::Eq), trimmed)
-            }
-            ('!', Some(('=', _))) => {
-                symbol_token!('!', '=', TokenKind::Operator(BinaryOperator::Ne), trimmed)
-            }
-            ('>', Some(('=', _))) => {
-                symbol_token!('>', '=', TokenKind::Operator(BinaryOperator::Ge), trimmed)
-            }
-            ('<', Some(('=', _))) => {
-                symbol_token!('<', '=', TokenKind::Operator(BinaryOperator::Le), trimmed)
-            }
-            ('>', _) => symbol_token!('>', TokenKind::Operator(BinaryOperator::Gt), trimmed),
-            ('<', _) => symbol_token!('<', TokenKind::Operator(BinaryOperator::Lt), trimmed),
-            ('|', _) => symbol_token!('|', TokenKind::Operator(BinaryOperator::Or), trimmed),
-            ('&', _) => symbol_token!('&', TokenKind::Operator(BinaryOperator::And), trimmed),
-            ('{', _) => symbol_token!('{', TokenKind::Delimiter(Delimiter::CurlyLeft), trimmed),
-            ('}', _) => symbol_token!('}', TokenKind::Delimiter(Delimiter::CurlyRight), trimmed),
-            ('[', _) => symbol_token!('[', TokenKind::Delimiter(Delimiter::SquareLeft), trimmed),
-            (']', _) => symbol_token!(']', TokenKind::Delimiter(Delimiter::SquareRight), trimmed),
-            ('(', _) => symbol_token!('(', TokenKind::Delimiter(Delimiter::ParLeft), trimmed),
-            (')', _) => symbol_token!(')', TokenKind::Delimiter(Delimiter::ParRight), trimmed),
-            (',', _) => symbol_token!(',', TokenKind::Separator(Separator::Comma), trimmed),
-            (':', _) => symbol_token!(':', TokenKind::Separator(Separator::Colon), trimmed),
-            (';', _) => symbol_token!(';', TokenKind::Separator(Separator::Semi), trimmed),
-            ('.', _) => symbol_token!('.', TokenKind::Dot(Dot::Dot), trimmed),
+            sp!('=', '=') => st!('=', '=', TokenKind::Operator(BinaryOperator::Eq), trimmed),
+            sp!('!', '=') => st!('!', '=', TokenKind::Operator(BinaryOperator::Ne), trimmed),
+            sp!('>', '=') => st!('>', '=', TokenKind::Operator(BinaryOperator::Ge), trimmed),
+            sp!('<', '=') => st!('<', '=', TokenKind::Operator(BinaryOperator::Le), trimmed),
+            sp!('>') => st!('>', TokenKind::Operator(BinaryOperator::Gt), trimmed),
+            sp!('<') => st!('<', TokenKind::Operator(BinaryOperator::Lt), trimmed),
+            sp!('|') => st!('|', TokenKind::Operator(BinaryOperator::Or), trimmed),
+            sp!('&') => st!('&', TokenKind::Operator(BinaryOperator::And), trimmed),
+            sp!('{') => st!('{', TokenKind::Delimiter(Delimiter::CurlyLeft), trimmed),
+            sp!('}') => st!('}', TokenKind::Delimiter(Delimiter::CurlyRight), trimmed),
+            sp!('[') => st!('[', TokenKind::Delimiter(Delimiter::SquareLeft), trimmed),
+            sp!(']') => st!(']', TokenKind::Delimiter(Delimiter::SquareRight), trimmed),
+            sp!('(') => st!('(', TokenKind::Delimiter(Delimiter::ParLeft), trimmed),
+            sp!(')') => st!(')', TokenKind::Delimiter(Delimiter::ParRight), trimmed),
+            sp!(',') => st!(',', TokenKind::Separator(Separator::Comma), trimmed),
+            sp!(':') => st!(':', TokenKind::Separator(Separator::Colon), trimmed),
+            sp!(';') => st!(';', TokenKind::Separator(Separator::Semi), trimmed),
+            sp!('.') => st!('.', TokenKind::Dot(Dot::Dot), trimmed),
             ('"', _) => {
                 let mut escaped = false;
                 let Some(index) = trimmed
