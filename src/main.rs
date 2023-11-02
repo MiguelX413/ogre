@@ -62,10 +62,6 @@ impl<'a> Iterator for SplitTokens<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         self.remainder = self.remainder.trim();
 
-        if self.remainder.is_empty() {
-            return None;
-        }
-
         let mut chars = self.remainder.chars();
         match (chars.next()?, chars.next().map(|c| (c, chars.next()))) {
             ('0'..='9', _) | ('+' | '-', Some(('0'..='9', _))) => {
