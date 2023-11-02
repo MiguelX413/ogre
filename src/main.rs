@@ -60,79 +60,155 @@ impl<'a> Iterator for SplitTokens<'a> {
     type Item = Result<Token<'a>, ParseTokenError<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let trimmed = self.remainder.trim();
+        self.remainder = self.remainder.trim();
 
-        if trimmed.is_empty() {
+        if self.remainder.is_empty() {
             return None;
         }
 
-        let mut chars = trimmed.chars();
+        let mut chars = self.remainder.chars();
         match (chars.next()?, chars.next().map(|c| (c, chars.next()))) {
             ('0'..='9', _) | ('+' | '-', Some(('0'..='9', _))) => {
-                let (token, remainder) = trimmed.split_at(
-                    trimmed
+                let (token, remainder) = self.remainder.split_at(
+                    self.remainder
                         .char_indices()
                         .skip(1)
                         .find(|(_, f)| !(f.is_ascii_digit()))
                         .map(|(i, _)| i)
-                        .unwrap_or(trimmed.len()),
+                        .unwrap_or(self.remainder.len()),
                 );
                 match token.parse() {
                     Ok(i) => Some(Ok((Token::new(TokenKind::Number(i), token), remainder))),
                     Err(e) => Some(Err(ParseTokenError::ParseIntError(e, token))),
                 }
             }
-            sp!('-', '>') => st!('-', '>', TokenKind::Arrow(Arrow::RArrow), trimmed),
-            sp!('=', '>') => st!('=', '>', TokenKind::Arrow(Arrow::FatArrow), &trimmed),
+            sp!('-', '>') => st!('-', '>', TokenKind::Arrow(Arrow::RArrow), self.remainder),
+            sp!('=', '>') => st!('=', '>', TokenKind::Arrow(Arrow::FatArrow), &self.remainder),
             sp!('/', '/', '/') => {
-                let (token, remainder) =
-                    trimmed.split_at(trimmed.find('\n').unwrap_or(trimmed.len()));
+                let (token, remainder) = self
+                    .remainder
+                    .split_at(self.remainder.find('\n').unwrap_or(self.remainder.len()));
                 Some(Ok((
                     Token::new(TokenKind::Comment(Comment::DocComment), token),
                     remainder,
                 )))
             }
             sp!('/', '/') => {
-                let (token, remainder) =
-                    trimmed.split_at(trimmed.find('\n').unwrap_or(trimmed.len()));
+                let (token, remainder) = self
+                    .remainder
+                    .split_at(self.remainder.find('\n').unwrap_or(self.remainder.len()));
                 Some(Ok((
                     Token::new(TokenKind::Comment(Comment::Comment), token),
                     remainder,
                 )))
             }
-            sp!('+') => st!('+', TokenKind::Operator(BinaryOperator::Add), trimmed),
-            sp!('-') => st!('-', TokenKind::Operator(BinaryOperator::Sub), trimmed),
-            sp!('*', '*') => st!('*', '*', TokenKind::Operator(BinaryOperator::Pow), trimmed),
-            sp!('*') => st!('*', TokenKind::Operator(BinaryOperator::Mul), trimmed),
-            sp!('/') => st!('/', TokenKind::Operator(BinaryOperator::Div), trimmed),
-            sp!('%') => st!('%', TokenKind::Operator(BinaryOperator::Mod), trimmed),
+            sp!('+') => st!(
+                '+',
+                TokenKind::Operator(BinaryOperator::Add),
+                self.remainder
+            ),
+            sp!('-') => st!(
+                '-',
+                TokenKind::Operator(BinaryOperator::Sub),
+                self.remainder
+            ),
+            sp!('*', '*') => st!(
+                '*',
+                '*',
+                TokenKind::Operator(BinaryOperator::Pow),
+                self.remainder
+            ),
+            sp!('*') => st!(
+                '*',
+                TokenKind::Operator(BinaryOperator::Mul),
+                self.remainder
+            ),
+            sp!('/') => st!(
+                '/',
+                TokenKind::Operator(BinaryOperator::Div),
+                self.remainder
+            ),
+            sp!('%') => st!(
+                '%',
+                TokenKind::Operator(BinaryOperator::Mod),
+                self.remainder
+            ),
             sp!(':', '=') => st!(
                 ':',
                 '=',
                 TokenKind::Operator(BinaryOperator::Assign),
-                trimmed
+                self.remainder
             ),
-            sp!('=', '=') => st!('=', '=', TokenKind::Operator(BinaryOperator::Eq), trimmed),
-            sp!('!', '=') => st!('!', '=', TokenKind::Operator(BinaryOperator::Ne), trimmed),
-            sp!('>', '=') => st!('>', '=', TokenKind::Operator(BinaryOperator::Ge), trimmed),
-            sp!('<', '=') => st!('<', '=', TokenKind::Operator(BinaryOperator::Le), trimmed),
-            sp!('>') => st!('>', TokenKind::Operator(BinaryOperator::Gt), trimmed),
-            sp!('<') => st!('<', TokenKind::Operator(BinaryOperator::Lt), trimmed),
-            sp!('|') => st!('|', TokenKind::Operator(BinaryOperator::Or), trimmed),
-            sp!('&') => st!('&', TokenKind::Operator(BinaryOperator::And), trimmed),
-            sp!('{') => st!('{', TokenKind::Delimiter(Delimiter::CurlyLeft), trimmed),
-            sp!('}') => st!('}', TokenKind::Delimiter(Delimiter::CurlyRight), trimmed),
-            sp!('[') => st!('[', TokenKind::Delimiter(Delimiter::SquareLeft), trimmed),
-            sp!(']') => st!(']', TokenKind::Delimiter(Delimiter::SquareRight), trimmed),
-            sp!('(') => st!('(', TokenKind::Delimiter(Delimiter::ParLeft), trimmed),
-            sp!(')') => st!(')', TokenKind::Delimiter(Delimiter::ParRight), trimmed),
-            sp!(',') => st!(',', TokenKind::Separator(Separator::Comma), trimmed),
-            sp!(':') => st!(':', TokenKind::Separator(Separator::Colon), trimmed),
-            sp!(';') => st!(';', TokenKind::Separator(Separator::Semi), trimmed),
-            sp!('.') => st!('.', TokenKind::Dot(Dot::Dot), trimmed),
+            sp!('=', '=') => st!(
+                '=',
+                '=',
+                TokenKind::Operator(BinaryOperator::Eq),
+                self.remainder
+            ),
+            sp!('!', '=') => st!(
+                '!',
+                '=',
+                TokenKind::Operator(BinaryOperator::Ne),
+                self.remainder
+            ),
+            sp!('>', '=') => st!(
+                '>',
+                '=',
+                TokenKind::Operator(BinaryOperator::Ge),
+                self.remainder
+            ),
+            sp!('<', '=') => st!(
+                '<',
+                '=',
+                TokenKind::Operator(BinaryOperator::Le),
+                self.remainder
+            ),
+            sp!('>') => st!('>', TokenKind::Operator(BinaryOperator::Gt), self.remainder),
+            sp!('<') => st!('<', TokenKind::Operator(BinaryOperator::Lt), self.remainder),
+            sp!('|') => st!('|', TokenKind::Operator(BinaryOperator::Or), self.remainder),
+            sp!('&') => st!(
+                '&',
+                TokenKind::Operator(BinaryOperator::And),
+                self.remainder
+            ),
+            sp!('{') => st!(
+                '{',
+                TokenKind::Delimiter(Delimiter::CurlyLeft),
+                self.remainder
+            ),
+            sp!('}') => st!(
+                '}',
+                TokenKind::Delimiter(Delimiter::CurlyRight),
+                self.remainder
+            ),
+            sp!('[') => st!(
+                '[',
+                TokenKind::Delimiter(Delimiter::SquareLeft),
+                self.remainder
+            ),
+            sp!(']') => st!(
+                ']',
+                TokenKind::Delimiter(Delimiter::SquareRight),
+                self.remainder
+            ),
+            sp!('(') => st!(
+                '(',
+                TokenKind::Delimiter(Delimiter::ParLeft),
+                self.remainder
+            ),
+            sp!(')') => st!(
+                ')',
+                TokenKind::Delimiter(Delimiter::ParRight),
+                self.remainder
+            ),
+            sp!(',') => st!(',', TokenKind::Separator(Separator::Comma), self.remainder),
+            sp!(':') => st!(':', TokenKind::Separator(Separator::Colon), self.remainder),
+            sp!(';') => st!(';', TokenKind::Separator(Separator::Semi), self.remainder),
+            sp!('.') => st!('.', TokenKind::Dot(Dot::Dot), self.remainder),
             ('"', _) => {
                 let mut escaped = false;
-                let Some(index) = trimmed
+                let Some(index) = self
+                    .remainder
                     .char_indices()
                     .skip(1)
                     .find(|(_, c)| match (c, escaped) {
@@ -152,7 +228,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                     return Some(Err(ParseTokenError::UnterminatedString));
                 };
                 let mut escaped = false;
-                match trimmed[1..index]
+                match self.remainder[1..index]
                     .chars()
                     .filter_map(|c| match (c, escaped) {
                         ('\\', false) => {
@@ -176,19 +252,20 @@ impl<'a> Iterator for SplitTokens<'a> {
                     .collect::<Result<_, _>>()
                 {
                     Ok(string) => Some(Ok((
-                        Token::new(TokenKind::String(string), &trimmed[..=index]),
-                        &trimmed[index + 1..],
+                        Token::new(TokenKind::String(string), &self.remainder[..=index]),
+                        &self.remainder[index + 1..],
                     ))),
                     Err(e) => Some(Err(e)),
                 }
             }
             (c, _) if c.is_alphabetic() | (c == '_') => {
                 let mut is_macro = false;
-                let (token, remainder) = trimmed.split_at(
+                let (token, remainder) = self.remainder.split_at(
                     if c.is_uppercase() {
-                        trimmed.find(|c: char| !(c.is_alphanumeric() | (c == '_')))
+                        self.remainder
+                            .find(|c: char| !(c.is_alphanumeric() | (c == '_')))
                     } else {
-                        trimmed.find(|c| match (c, is_macro) {
+                        self.remainder.find(|c| match (c, is_macro) {
                             (_, true) => true,
                             ('!', false) => {
                                 is_macro = true;
@@ -197,7 +274,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                             (cc, _) => !(cc.is_alphanumeric() | (cc == '_')),
                         })
                     }
-                    .unwrap_or(trimmed.len()),
+                    .unwrap_or(self.remainder.len()),
                 );
                 Some(Ok((
                     Token::new(
@@ -225,7 +302,7 @@ impl<'a> Iterator for SplitTokens<'a> {
             }
             (c, _) => Some(Err(ParseTokenError::InvalidChar(
                 c,
-                &trimmed[..c.len_utf8()],
+                &self.remainder[..c.len_utf8()],
             ))),
         }
         .map(|f| {
