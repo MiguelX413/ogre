@@ -273,6 +273,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                             escaped = false;
                             match cc {
                                 '\\' => Some(Ok('\\')),
+                                '\n' => None,
                                 'n' => Some(Ok('\n')),
                                 't' => Some(Ok('\t')),
                                 '0' => Some(Ok('\0')),
@@ -354,8 +355,10 @@ pub fn main() {
         "日本語a+123",
         "cat- 32432432432432-ref",
         "{2133 ** 21} % 2",
-        "let my_string := \"lol\\\"test\";
-let xd := 2;",
+        r#"let my_string := "lol\"test";
+let xd := 2;
+let multi_line_str := "xd\
+sus";"#,
     ]
     .into_iter()
     .for_each(|string| {
