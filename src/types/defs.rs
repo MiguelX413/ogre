@@ -14,7 +14,7 @@ pub enum TokenKind {
     Keyword(Keyword),
     Identifier,
     Literal(Literal),
-    Punctuation(Punctuation),
+    Punct(Punct),
     Delimiter(Delimiter),
     Comment(Comment),
 }
@@ -43,7 +43,7 @@ pub enum Literal {
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-pub enum Punctuation {
+pub enum Punct {
     Assign,
     Plus,
     Minus,

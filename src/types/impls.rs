@@ -1,8 +1,8 @@
 use std::fmt::{Display, Formatter};
 
-use crate::types::defs::{Delimiter, Keyword, ParseTokenError, Punctuation};
+use crate::types::defs::{Delimiter, Keyword, ParseTokenError, Punct};
 
-impl Display for Punctuation {
+impl Display for Punct {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Assign => write!(f, ":="),

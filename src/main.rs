@@ -1,5 +1,5 @@
 use crate::types::defs::{
-    Comment, Delimiter, Keyword, Literal, ParseTokenError, Punctuation, Token, TokenKind,
+    Comment, Delimiter, Keyword, Literal, ParseTokenError, Punct, Token, TokenKind,
 };
 
 mod types;
@@ -80,18 +80,8 @@ impl<'a> Iterator for SplitTokens<'a> {
                     Err(e) => Some(Err(ParseTokenError::ParseIntError(e, token))),
                 }
             }
-            sp!('-', '>') => st!(
-                '-',
-                '>',
-                TokenKind::Punctuation(Punctuation::RArrow),
-                self.remainder
-            ),
-            sp!('=', '>') => st!(
-                '=',
-                '>',
-                TokenKind::Punctuation(Punctuation::FatArrow),
-                &self.remainder
-            ),
+            sp!('-', '>') => st!('-', '>', TokenKind::Punct(Punct::RArrow), self.remainder),
+            sp!('=', '>') => st!('=', '>', TokenKind::Punct(Punct::FatArrow), &self.remainder),
             sp!('/', '/', '/') => {
                 let (token, remainder) = self
                     .remainder
@@ -110,85 +100,23 @@ impl<'a> Iterator for SplitTokens<'a> {
                     remainder,
                 )))
             }
-            sp!('+') => st!(
-                '+',
-                TokenKind::Punctuation(Punctuation::Plus),
-                self.remainder
-            ),
-            sp!('-') => st!(
-                '-',
-                TokenKind::Punctuation(Punctuation::Minus),
-                self.remainder
-            ),
-            sp!('*', '*') => st!(
-                '*',
-                '*',
-                TokenKind::Punctuation(Punctuation::StarStar),
-                self.remainder
-            ),
-            sp!('*') => st!(
-                '*',
-                TokenKind::Punctuation(Punctuation::Star),
-                self.remainder
-            ),
-            sp!('/') => st!(
-                '/',
-                TokenKind::Punctuation(Punctuation::Slash),
-                self.remainder
-            ),
-            sp!('%') => st!(
-                '%',
-                TokenKind::Punctuation(Punctuation::Percent),
-                self.remainder
-            ),
-            sp!('^') => st!(
-                '^',
-                TokenKind::Punctuation(Punctuation::Caret),
-                self.remainder
-            ),
-            sp!(':', '=') => st!(
-                ':',
-                '=',
-                TokenKind::Punctuation(Punctuation::Assign),
-                self.remainder
-            ),
-            sp!('=', '=') => st!(
-                '=',
-                '=',
-                TokenKind::Punctuation(Punctuation::Eq),
-                self.remainder
-            ),
-            sp!('!', '=') => st!(
-                '!',
-                '=',
-                TokenKind::Punctuation(Punctuation::Ne),
-                self.remainder
-            ),
-            sp!('!') => st!(
-                '!',
-                TokenKind::Punctuation(Punctuation::Not),
-                self.remainder
-            ),
-            sp!('>', '=') => st!(
-                '>',
-                '=',
-                TokenKind::Punctuation(Punctuation::Ge),
-                self.remainder
-            ),
-            sp!('<', '=') => st!(
-                '<',
-                '=',
-                TokenKind::Punctuation(Punctuation::Le),
-                self.remainder
-            ),
-            sp!('>') => st!('>', TokenKind::Punctuation(Punctuation::Gt), self.remainder),
-            sp!('<') => st!('<', TokenKind::Punctuation(Punctuation::Lt), self.remainder),
-            sp!('|') => st!('|', TokenKind::Punctuation(Punctuation::Or), self.remainder),
-            sp!('&') => st!(
-                '&',
-                TokenKind::Punctuation(Punctuation::And),
-                self.remainder
-            ),
+            sp!('+') => st!('+', TokenKind::Punct(Punct::Plus), self.remainder),
+            sp!('-') => st!('-', TokenKind::Punct(Punct::Minus), self.remainder),
+            sp!('*', '*') => st!('*', '*', TokenKind::Punct(Punct::StarStar), self.remainder),
+            sp!('*') => st!('*', TokenKind::Punct(Punct::Star), self.remainder),
+            sp!('/') => st!('/', TokenKind::Punct(Punct::Slash), self.remainder),
+            sp!('%') => st!('%', TokenKind::Punct(Punct::Percent), self.remainder),
+            sp!('^') => st!('^', TokenKind::Punct(Punct::Caret), self.remainder),
+            sp!(':', '=') => st!(':', '=', TokenKind::Punct(Punct::Assign), self.remainder),
+            sp!('=', '=') => st!('=', '=', TokenKind::Punct(Punct::Eq), self.remainder),
+            sp!('!', '=') => st!('!', '=', TokenKind::Punct(Punct::Ne), self.remainder),
+            sp!('!') => st!('!', TokenKind::Punct(Punct::Not), self.remainder),
+            sp!('>', '=') => st!('>', '=', TokenKind::Punct(Punct::Ge), self.remainder),
+            sp!('<', '=') => st!('<', '=', TokenKind::Punct(Punct::Le), self.remainder),
+            sp!('>') => st!('>', TokenKind::Punct(Punct::Gt), self.remainder),
+            sp!('<') => st!('<', TokenKind::Punct(Punct::Lt), self.remainder),
+            sp!('|') => st!('|', TokenKind::Punct(Punct::Or), self.remainder),
+            sp!('&') => st!('&', TokenKind::Punct(Punct::And), self.remainder),
             sp!('{') => st!(
                 '{',
                 TokenKind::Delimiter(Delimiter::CurlyLeft),
@@ -219,26 +147,10 @@ impl<'a> Iterator for SplitTokens<'a> {
                 TokenKind::Delimiter(Delimiter::ParRight),
                 self.remainder
             ),
-            sp!(',') => st!(
-                ',',
-                TokenKind::Punctuation(Punctuation::Comma),
-                self.remainder
-            ),
-            sp!(':') => st!(
-                ':',
-                TokenKind::Punctuation(Punctuation::Colon),
-                self.remainder
-            ),
-            sp!(';') => st!(
-                ';',
-                TokenKind::Punctuation(Punctuation::Semi),
-                self.remainder
-            ),
-            sp!('.') => st!(
-                '.',
-                TokenKind::Punctuation(Punctuation::Dot),
-                self.remainder
-            ),
+            sp!(',') => st!(',', TokenKind::Punct(Punct::Comma), self.remainder),
+            sp!(':') => st!(':', TokenKind::Punct(Punct::Colon), self.remainder),
+            sp!(';') => st!(';', TokenKind::Punct(Punct::Semi), self.remainder),
+            sp!('.') => st!('.', TokenKind::Punct(Punct::Dot), self.remainder),
             ('"', _) => {
                 let mut escaped = false;
                 let Some(index) = self
