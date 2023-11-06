@@ -1,9 +1,7 @@
-use crate::types::defs::{
-    Arrow, BinaryOperator, Delimiter, Dot, Keyword, ParseTokenError, Separator,
-};
+use crate::types::defs::{Delimiter, Keyword, ParseTokenError, Punctuation};
 use std::fmt::{Display, Formatter};
 
-impl Display for BinaryOperator {
+impl Display for Punctuation {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Add => write!(f, "+"),
@@ -21,6 +19,12 @@ impl Display for BinaryOperator {
             Self::Le => write!(f, "<="),
             Self::Or => write!(f, "|"),
             Self::And => write!(f, "&"),
+            Self::Comma => write!(f, ","),
+            Self::Colon => write!(f, ":"),
+            Self::Semi => write!(f, ";"),
+            Self::RArrow => write!(f, "->"),
+            Self::FatArrow => write!(f, "=>"),
+            Self::Dot => write!(f, "."),
         }
     }
 }
@@ -34,16 +38,6 @@ impl Display for Delimiter {
             Self::SquareRight => write!(f, "]"),
             Self::ParLeft => write!(f, "("),
             Self::ParRight => write!(f, ")"),
-        }
-    }
-}
-
-impl Display for Separator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Comma => write!(f, ","),
-            Self::Colon => write!(f, ":"),
-            Self::Semi => write!(f, ";"),
         }
     }
 }
@@ -63,22 +57,6 @@ impl Display for Keyword {
             Self::Return => write!(f, "return"),
             Self::Gen => write!(f, "gen"),
             Self::Func => write!(f, "func"),
-        }
-    }
-}
-impl Display for Arrow {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::RArrow => write!(f, "->"),
-            Self::FatArrow => write!(f, "=>"),
-        }
-    }
-}
-
-impl Display for Dot {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Dot => write!(f, "."),
         }
     }
 }

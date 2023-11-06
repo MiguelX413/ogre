@@ -1,8 +1,7 @@
 mod types;
 
 use crate::types::defs::{
-    Arrow, BinaryOperator, Comment, Delimiter, Dot, Keyword, ParseTokenError, Separator, Token,
-    TokenKind,
+    Comment, Delimiter, Keyword, Literal, ParseTokenError, Punctuation, Token, TokenKind,
 };
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -74,12 +73,25 @@ impl<'a> Iterator for SplitTokens<'a> {
                         .unwrap_or(self.remainder.len()),
                 );
                 match token.parse() {
-                    Ok(i) => Some(Ok((Token::new(TokenKind::Number(i), token), remainder))),
+                    Ok(i) => Some(Ok((
+                        Token::new(TokenKind::Literal(Literal::Number(i)), token),
+                        remainder,
+                    ))),
                     Err(e) => Some(Err(ParseTokenError::ParseIntError(e, token))),
                 }
             }
-            sp!('-', '>') => st!('-', '>', TokenKind::Arrow(Arrow::RArrow), self.remainder),
-            sp!('=', '>') => st!('=', '>', TokenKind::Arrow(Arrow::FatArrow), &self.remainder),
+            sp!('-', '>') => st!(
+                '-',
+                '>',
+                TokenKind::Punctuation(Punctuation::RArrow),
+                self.remainder
+            ),
+            sp!('=', '>') => st!(
+                '=',
+                '>',
+                TokenKind::Punctuation(Punctuation::FatArrow),
+                &self.remainder
+            ),
             sp!('/', '/', '/') => {
                 let (token, remainder) = self
                     .remainder
@@ -100,71 +112,71 @@ impl<'a> Iterator for SplitTokens<'a> {
             }
             sp!('+') => st!(
                 '+',
-                TokenKind::Operator(BinaryOperator::Add),
+                TokenKind::Punctuation(Punctuation::Add),
                 self.remainder
             ),
             sp!('-') => st!(
                 '-',
-                TokenKind::Operator(BinaryOperator::Sub),
+                TokenKind::Punctuation(Punctuation::Sub),
                 self.remainder
             ),
             sp!('*', '*') => st!(
                 '*',
                 '*',
-                TokenKind::Operator(BinaryOperator::Pow),
+                TokenKind::Punctuation(Punctuation::Pow),
                 self.remainder
             ),
             sp!('*') => st!(
                 '*',
-                TokenKind::Operator(BinaryOperator::Mul),
+                TokenKind::Punctuation(Punctuation::Mul),
                 self.remainder
             ),
             sp!('/') => st!(
                 '/',
-                TokenKind::Operator(BinaryOperator::Div),
+                TokenKind::Punctuation(Punctuation::Div),
                 self.remainder
             ),
             sp!('%') => st!(
                 '%',
-                TokenKind::Operator(BinaryOperator::Mod),
+                TokenKind::Punctuation(Punctuation::Mod),
                 self.remainder
             ),
             sp!(':', '=') => st!(
                 ':',
                 '=',
-                TokenKind::Operator(BinaryOperator::Assign),
+                TokenKind::Punctuation(Punctuation::Assign),
                 self.remainder
             ),
             sp!('=', '=') => st!(
                 '=',
                 '=',
-                TokenKind::Operator(BinaryOperator::Eq),
+                TokenKind::Punctuation(Punctuation::Eq),
                 self.remainder
             ),
             sp!('!', '=') => st!(
                 '!',
                 '=',
-                TokenKind::Operator(BinaryOperator::Ne),
+                TokenKind::Punctuation(Punctuation::Ne),
                 self.remainder
             ),
             sp!('>', '=') => st!(
                 '>',
                 '=',
-                TokenKind::Operator(BinaryOperator::Ge),
+                TokenKind::Punctuation(Punctuation::Ge),
                 self.remainder
             ),
             sp!('<', '=') => st!(
                 '<',
                 '=',
-                TokenKind::Operator(BinaryOperator::Le),
+                TokenKind::Punctuation(Punctuation::Le),
                 self.remainder
             ),
-            sp!('>') => st!('>', TokenKind::Operator(BinaryOperator::Gt), self.remainder),
-            sp!('<') => st!('<', TokenKind::Operator(BinaryOperator::Lt), self.remainder),
-            sp!('|') => st!('|', TokenKind::Operator(BinaryOperator::Or), self.remainder),
+            sp!('>') => st!('>', TokenKind::Punctuation(Punctuation::Gt), self.remainder),
+            sp!('<') => st!('<', TokenKind::Punctuation(Punctuation::Lt), self.remainder),
+            sp!('|') => st!('|', TokenKind::Punctuation(Punctuation::Or), self.remainder),
             sp!('&') => st!(
                 '&',
-                TokenKind::Operator(BinaryOperator::And),
+                TokenKind::Punctuation(Punctuation::And),
                 self.remainder
             ),
             sp!('{') => st!(
@@ -197,10 +209,26 @@ impl<'a> Iterator for SplitTokens<'a> {
                 TokenKind::Delimiter(Delimiter::ParRight),
                 self.remainder
             ),
-            sp!(',') => st!(',', TokenKind::Separator(Separator::Comma), self.remainder),
-            sp!(':') => st!(':', TokenKind::Separator(Separator::Colon), self.remainder),
-            sp!(';') => st!(';', TokenKind::Separator(Separator::Semi), self.remainder),
-            sp!('.') => st!('.', TokenKind::Dot(Dot::Dot), self.remainder),
+            sp!(',') => st!(
+                ',',
+                TokenKind::Punctuation(Punctuation::Comma),
+                self.remainder
+            ),
+            sp!(':') => st!(
+                ':',
+                TokenKind::Punctuation(Punctuation::Colon),
+                self.remainder
+            ),
+            sp!(';') => st!(
+                ';',
+                TokenKind::Punctuation(Punctuation::Semi),
+                self.remainder
+            ),
+            sp!('.') => st!(
+                '.',
+                TokenKind::Punctuation(Punctuation::Dot),
+                self.remainder
+            ),
             ('"', _) => {
                 let mut escaped = false;
                 let Some(index) = self
@@ -248,29 +276,20 @@ impl<'a> Iterator for SplitTokens<'a> {
                     .collect::<Result<_, _>>()
                 {
                     Ok(string) => Some(Ok((
-                        Token::new(TokenKind::String(string), &self.remainder[..=index]),
+                        Token::new(
+                            TokenKind::Literal(Literal::String(string)),
+                            &self.remainder[..=index],
+                        ),
                         &self.remainder[index + 1..],
                     ))),
                     Err(e) => Some(Err(e)),
                 }
             }
             (c, _) if c.is_alphabetic() | (c == '_') => {
-                let mut is_macro = false;
                 let (token, remainder) = self.remainder.split_at(
-                    if c.is_uppercase() {
-                        self.remainder
-                            .find(|c: char| !(c.is_alphanumeric() | (c == '_')))
-                    } else {
-                        self.remainder.find(|c| match (c, is_macro) {
-                            (_, true) => true,
-                            ('!', false) => {
-                                is_macro = true;
-                                false
-                            }
-                            (cc, _) => !(cc.is_alphanumeric() | (cc == '_')),
-                        })
-                    }
-                    .unwrap_or(self.remainder.len()),
+                    self.remainder
+                        .find(|c: char| !(c.is_alphanumeric() | (c == '_')))
+                        .unwrap_or(self.remainder.len()),
                 );
                 Some(Ok((
                     Token::new(
@@ -287,9 +306,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                             "return" => TokenKind::Keyword(Keyword::Return),
                             "gen" => TokenKind::Keyword(Keyword::Gen),
                             "func" => TokenKind::Keyword(Keyword::Func),
-                            _ if is_macro => TokenKind::MacroName,
-                            _ if c.is_uppercase() => TokenKind::TypeName,
-                            _ => TokenKind::Name,
+                            _ => TokenKind::Identifier,
                         },
                         token,
                     ),

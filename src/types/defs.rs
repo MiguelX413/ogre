@@ -1,39 +1,22 @@
 use std::str::FromStr;
 
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-pub enum BinaryOperator {
-    Add,
-    Sub,
-    Mul,
-    Pow,
-    Div,
-    Mod,
-    Assign,
-    Eq,
-    Ne,
-    Gt,
-    Lt,
-    Ge,
-    Le,
-    Or,
-    And,
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct Token<'a>(TokenKind, &'a str);
+
+impl<'a> Token<'a> {
+    pub fn new(token_kind: TokenKind, s: &'a str) -> Self {
+        Self(token_kind, s)
+    }
 }
 
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-pub enum Delimiter {
-    CurlyLeft,
-    CurlyRight,
-    SquareLeft,
-    SquareRight,
-    ParLeft,
-    ParRight,
-}
-
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-pub enum Separator {
-    Comma,
-    Colon,
-    Semi,
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub enum TokenKind {
+    Keyword(Keyword),
+    Identifier,
+    Literal(Literal),
+    Punctuation(Punctuation),
+    Delimiter(Delimiter),
+    Comment(Comment),
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -52,46 +35,52 @@ pub enum Keyword {
     Func,
 }
 
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Literal {
+    Character(char),
+    String(String),
+    Number(i32),
+}
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Punctuation {
+    Add,
+    Sub,
+    Mul,
+    Pow,
+    Div,
+    Mod,
+    Assign,
+    Eq,
+    Ne,
+    Gt,
+    Lt,
+    Ge,
+    Le,
+    Or,
+    And,
+    Comma,
+    Colon,
+    Semi,
+    RArrow,
+    FatArrow,
+    Dot,
+}
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Delimiter {
+    CurlyLeft,
+    CurlyRight,
+    SquareLeft,
+    SquareRight,
+    ParLeft,
+    ParRight,
+}
+
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Comment {
     Comment,
     DocComment,
-}
-
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-pub enum Arrow {
-    RArrow,
-    FatArrow,
-}
-
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-pub enum Dot {
-    Dot,
-}
-
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct Token<'a>(TokenKind, &'a str);
-
-impl<'a> Token<'a> {
-    pub fn new(token_kind: TokenKind, s: &'a str) -> Self {
-        Self(token_kind, s)
-    }
-}
-
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub enum TokenKind {
-    Operator(BinaryOperator),
-    Delimiter(Delimiter),
-    Separator(Separator),
-    Keyword(Keyword),
-    Name,
-    TypeName,
-    MacroName,
-    Comment(Comment),
-    Number(i32),
-    String(String),
-    Arrow(Arrow),
-    Dot(Dot),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
