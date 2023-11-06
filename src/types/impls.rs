@@ -4,12 +4,13 @@ use std::fmt::{Display, Formatter};
 impl Display for Punctuation {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Add => write!(f, "+"),
-            Self::Sub => write!(f, "-"),
-            Self::Mul => write!(f, "*"),
-            Self::Pow => write!(f, "**"),
-            Self::Div => write!(f, "/"),
-            Self::Mod => write!(f, "/"),
+            Self::Plus => write!(f, "+"),
+            Self::Minus => write!(f, "-"),
+            Self::Star => write!(f, "*"),
+            Self::StarStar => write!(f, "**"),
+            Self::Slash => write!(f, "/"),
+            Self::Percent => write!(f, "/"),
+            Self::Not => write!(f, "!"),
             Self::Assign => write!(f, ":="),
             Self::Eq => write!(f, "=="),
             Self::Ne => write!(f, "!="),

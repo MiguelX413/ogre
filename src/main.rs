@@ -112,33 +112,33 @@ impl<'a> Iterator for SplitTokens<'a> {
             }
             sp!('+') => st!(
                 '+',
-                TokenKind::Punctuation(Punctuation::Add),
+                TokenKind::Punctuation(Punctuation::Plus),
                 self.remainder
             ),
             sp!('-') => st!(
                 '-',
-                TokenKind::Punctuation(Punctuation::Sub),
+                TokenKind::Punctuation(Punctuation::Minus),
                 self.remainder
             ),
             sp!('*', '*') => st!(
                 '*',
                 '*',
-                TokenKind::Punctuation(Punctuation::Pow),
+                TokenKind::Punctuation(Punctuation::StarStar),
                 self.remainder
             ),
             sp!('*') => st!(
                 '*',
-                TokenKind::Punctuation(Punctuation::Mul),
+                TokenKind::Punctuation(Punctuation::Star),
                 self.remainder
             ),
             sp!('/') => st!(
                 '/',
-                TokenKind::Punctuation(Punctuation::Div),
+                TokenKind::Punctuation(Punctuation::Slash),
                 self.remainder
             ),
             sp!('%') => st!(
                 '%',
-                TokenKind::Punctuation(Punctuation::Mod),
+                TokenKind::Punctuation(Punctuation::Percent),
                 self.remainder
             ),
             sp!(':', '=') => st!(
@@ -157,6 +157,11 @@ impl<'a> Iterator for SplitTokens<'a> {
                 '!',
                 '=',
                 TokenKind::Punctuation(Punctuation::Ne),
+                self.remainder
+            ),
+            sp!('!') => st!(
+                '!',
+                TokenKind::Punctuation(Punctuation::Not),
                 self.remainder
             ),
             sp!('>', '=') => st!(
