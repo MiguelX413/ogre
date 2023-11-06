@@ -1,3 +1,5 @@
+use unicode_xid::UnicodeXID;
+
 use crate::types::defs::{
     Comment, Delimiter, Keyword, Literal, ParseTokenError, Punctuation, Token, TokenKind,
 };
@@ -295,10 +297,10 @@ impl<'a> Iterator for SplitTokens<'a> {
                     Err(e) => Some(Err(e)),
                 }
             }
-            (c, _) if c.is_alphabetic() | (c == '_') => {
+            (c, _) if c.is_xid_start() | (c == '_') => {
                 let (token, remainder) = self.remainder.split_at(
                     self.remainder
-                        .find(|c: char| !(c.is_alphanumeric() | (c == '_')))
+                        .find(|c: char| !c.is_xid_continue())
                         .unwrap_or(self.remainder.len()),
                 );
                 Some(Ok((
@@ -344,7 +346,7 @@ pub fn split_tokens(string: &str) -> SplitTokens {
 pub fn main() {
     [
         "catfood-45",
-        "catfood",
+        "catfo_od",
         "67z23",
         "catfood&-45",
         "&",
