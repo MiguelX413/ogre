@@ -44,28 +44,29 @@ pub enum Literal {
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Punctuation {
+    Assign,
     Plus,
     Minus,
     Star,
     StarStar,
     Slash,
     Percent,
+    Caret,
     Not,
-    Assign,
+    And,
+    Or,
     Eq,
     Ne,
     Gt,
     Lt,
     Ge,
     Le,
-    Or,
-    And,
+    Dot,
     Comma,
-    Colon,
     Semi,
+    Colon,
     RArrow,
     FatArrow,
-    Dot,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]

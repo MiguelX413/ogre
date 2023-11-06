@@ -1,8 +1,8 @@
-mod types;
-
 use crate::types::defs::{
     Comment, Delimiter, Keyword, Literal, ParseTokenError, Punctuation, Token, TokenKind,
 };
+
+mod types;
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SplitTokens<'a> {
@@ -139,6 +139,11 @@ impl<'a> Iterator for SplitTokens<'a> {
             sp!('%') => st!(
                 '%',
                 TokenKind::Punctuation(Punctuation::Percent),
+                self.remainder
+            ),
+            sp!('^') => st!(
+                '^',
+                TokenKind::Punctuation(Punctuation::Caret),
                 self.remainder
             ),
             sp!(':', '=') => st!(

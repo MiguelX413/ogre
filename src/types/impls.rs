@@ -1,31 +1,33 @@
-use crate::types::defs::{Delimiter, Keyword, ParseTokenError, Punctuation};
 use std::fmt::{Display, Formatter};
+
+use crate::types::defs::{Delimiter, Keyword, ParseTokenError, Punctuation};
 
 impl Display for Punctuation {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Assign => write!(f, ":="),
             Self::Plus => write!(f, "+"),
             Self::Minus => write!(f, "-"),
             Self::Star => write!(f, "*"),
             Self::StarStar => write!(f, "**"),
             Self::Slash => write!(f, "/"),
             Self::Percent => write!(f, "/"),
+            Self::Caret => write!(f, "^"),
             Self::Not => write!(f, "!"),
-            Self::Assign => write!(f, ":="),
+            Self::And => write!(f, "&"),
+            Self::Or => write!(f, "|"),
             Self::Eq => write!(f, "=="),
             Self::Ne => write!(f, "!="),
             Self::Gt => write!(f, ">"),
             Self::Lt => write!(f, "<"),
             Self::Ge => write!(f, ">="),
             Self::Le => write!(f, "<="),
-            Self::Or => write!(f, "|"),
-            Self::And => write!(f, "&"),
+            Self::Dot => write!(f, "."),
             Self::Comma => write!(f, ","),
-            Self::Colon => write!(f, ":"),
             Self::Semi => write!(f, ";"),
+            Self::Colon => write!(f, ":"),
             Self::RArrow => write!(f, "->"),
             Self::FatArrow => write!(f, "=>"),
-            Self::Dot => write!(f, "."),
         }
     }
 }
