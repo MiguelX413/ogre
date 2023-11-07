@@ -20,19 +20,19 @@ impl<'a> SplitTokens<'a> {
 }
 
 macro_rules! sp {
-    ($char:literal) => {
+    ($char:pat) => {
         ($char, _)
     };
-    ($char1:literal, $char2:literal) => {
+    ($char1:pat, $char2:pat) => {
         ($char1, Some(($char2, _)))
     };
-    ($char1:literal, $char2:literal, $char3:literal) => {
+    ($char1:pat, $char2:pat, $char3:pat) => {
         ($char1, Some(($char2, Some($char3))))
     };
 }
 
 macro_rules! st {
-    ($char:literal, $token_kind:expr, $remainder:expr) => {{
+    ($char:expr, $token_kind:expr, $remainder:expr) => {{
         const CHAR: char = $char;
         const LEN: usize = CHAR.len_utf8();
         let token_kind: crate::types::defs::TokenKind = $token_kind;
@@ -42,7 +42,7 @@ macro_rules! st {
             &remainder[LEN..],
         )))
     }};
-    ($char1:literal, $char2:literal, $token_kind:expr, $remainder:expr) => {{
+    ($char1:expr, $char2:expr, $token_kind:expr, $remainder:expr) => {{
         const CHAR1: char = $char1;
         const CHAR2: char = $char2;
         const LEN: usize = CHAR1.len_utf8() + CHAR2.len_utf8();
