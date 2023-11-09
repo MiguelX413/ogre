@@ -86,6 +86,7 @@ pub enum Comment {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ParseTokenError<'a> {
     InvalidChar(char, &'a str),
+    CapsInImproperIdentifier(&'a str, usize),
     UnterminatedString,
     InvalidEscape(char),
 }

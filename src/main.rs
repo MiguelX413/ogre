@@ -211,6 +211,9 @@ impl<'a> Iterator for SplitTokens<'a> {
                         .find(|c: char| !(c.is_alphanumeric() | (c == '_')))
                         .unwrap_or(self.remainder.len()),
                 );
+                if let Some(i) = token.find(char::is_uppercase) {
+                    return Some(Err(ParseTokenError::CapsInImproperIdentifier(token, i)));
+                }
                 Some(Ok((
                     Token::new(
                         match token {
