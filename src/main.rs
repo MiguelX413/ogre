@@ -205,6 +205,17 @@ impl<'a> Iterator for SplitTokens<'a> {
                     Err(e) => Some(Err(e)),
                 }
             }
+            (c, _) if c.is_alphabetic() & c.is_uppercase() => {
+                let (token, remainder) = self.remainder.split_at(
+                    self.remainder
+                        .find(|c: char| !(c.is_alphanumeric() | (c == '_')))
+                        .unwrap_or(self.remainder.len()),
+                );
+                if let Some(i) = token.find('_') {
+                    return Some(Err(ParseTokenError::UnderscoreInProper(token, i)));
+                }
+                Some(Ok((Token::new(TokenKind::ProperIdent, token), remainder)))
+            }
             (c, _) if c.is_alphabetic() | (c == '_') => {
                 let (token, remainder) = self.remainder.split_at(
                     self.remainder
@@ -268,7 +279,7 @@ pub fn main() {
         "cat- 32432432432432-ref",
         "{2133 ** 21} % 2",
         r#"let my_string := "lol\"test";
-let xd := 2;
+let xd: Int := 2;
 let multi_line_str := "xd\
 sus";"#,
     ]

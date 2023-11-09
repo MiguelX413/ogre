@@ -11,6 +11,7 @@ impl<'a> Token<'a> {
 pub enum TokenKind {
     Keyword(Keyword),
     Ident,
+    ProperIdent,
     Literal(Literal),
     Punct(Punct),
     Delimiter(Delimiter),
@@ -87,6 +88,7 @@ pub enum Comment {
 pub enum ParseTokenError<'a> {
     InvalidChar(char, &'a str),
     CapsInImproperIdent(&'a str, usize),
+    UnderscoreInProper(&'a str, usize),
     UnterminatedString,
     InvalidEscape(char),
 }

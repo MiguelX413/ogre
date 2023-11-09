@@ -70,6 +70,9 @@ impl<'a> Display for ParseTokenError<'a> {
             Self::CapsInImproperIdent(s, i) => {
                 write!(f, "Caps in improper identifier, {s:?}, at pos {i}")
             }
+            Self::UnderscoreInProper(s, i) => {
+                write!(f, "Underscore in proper identifier, {s:?}, at pos {i}")
+            }
             Self::UnterminatedString => write!(f, "No string terminator found!"),
             Self::InvalidEscape(c) => write!(f, "Invalid escape \\{c}"),
         }
