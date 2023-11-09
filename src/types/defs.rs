@@ -10,7 +10,7 @@ impl<'a> Token<'a> {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum TokenKind {
     Keyword(Keyword),
-    Identifier,
+    Ident,
     Literal(Literal),
     Punct(Punct),
     Delimiter(Delimiter),
@@ -86,7 +86,7 @@ pub enum Comment {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ParseTokenError<'a> {
     InvalidChar(char, &'a str),
-    CapsInImproperIdentifier(&'a str, usize),
+    CapsInImproperIdent(&'a str, usize),
     UnterminatedString,
     InvalidEscape(char),
 }

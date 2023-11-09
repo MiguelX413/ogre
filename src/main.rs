@@ -212,7 +212,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                         .unwrap_or(self.remainder.len()),
                 );
                 if let Some(i) = token.find(char::is_uppercase) {
-                    return Some(Err(ParseTokenError::CapsInImproperIdentifier(token, i)));
+                    return Some(Err(ParseTokenError::CapsInImproperIdent(token, i)));
                 }
                 Some(Ok((
                     Token::new(
@@ -229,7 +229,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                             "return" => TokenKind::Keyword(Keyword::Return),
                             "gen" => TokenKind::Keyword(Keyword::Gen),
                             "func" => TokenKind::Keyword(Keyword::Func),
-                            _ => TokenKind::Identifier,
+                            _ => TokenKind::Ident,
                         },
                         token,
                     ),
