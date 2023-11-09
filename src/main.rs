@@ -4,14 +4,14 @@ use crate::types::defs::{
 
 mod types;
 
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SplitTokens<'a> {
     remainder: &'a str,
     original: &'a str,
 }
 
 impl<'a> SplitTokens<'a> {
-    pub fn new(string: &str) -> SplitTokens {
+    fn new(string: &str) -> SplitTokens {
         SplitTokens {
             remainder: string,
             original: string,
