@@ -67,7 +67,6 @@ impl<'a> Display for ParseTokenError<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::InvalidChar(c, _) => write!(f, "Invalid char: {c}"),
-            Self::ParseIntError(e, _) => write!(f, "Error parsing int: {e}"),
             Self::UnterminatedString => write!(f, "No string terminator found!"),
             Self::InvalidEscape(c) => write!(f, "Invalid escape \\{c}"),
         }

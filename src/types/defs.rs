@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Token<'a>(TokenKind, &'a str);
 
@@ -39,7 +37,7 @@ pub enum Keyword {
 pub enum Literal {
     Character(char),
     String(String),
-    Number(i32),
+    Number,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -88,7 +86,6 @@ pub enum Comment {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ParseTokenError<'a> {
     InvalidChar(char, &'a str),
-    ParseIntError(<i32 as FromStr>::Err, &'a str),
     UnterminatedString,
     InvalidEscape(char),
 }

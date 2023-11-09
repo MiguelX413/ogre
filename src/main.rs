@@ -72,13 +72,10 @@ impl<'a> Iterator for SplitTokens<'a> {
                         .map(|(i, _)| i)
                         .unwrap_or(self.remainder.len()),
                 );
-                match token.parse() {
-                    Ok(i) => Some(Ok((
-                        Token::new(TokenKind::Literal(Literal::Number(i)), token),
-                        remainder,
-                    ))),
-                    Err(e) => Some(Err(ParseTokenError::ParseIntError(e, token))),
-                }
+                Some(Ok((
+                    Token::new(TokenKind::Literal(Literal::Number), token),
+                    remainder,
+                )))
             }
             sp!('-', '>') => st!('-', '>', TokenKind::Punct(Punct::RArrow), self.remainder),
             sp!('=', '>') => st!('=', '>', TokenKind::Punct(Punct::FatArrow), &self.remainder),
