@@ -153,6 +153,7 @@ impl<'a> Iterator for SplitTokens<'a> {
             ),
             sp!(':') => st!(':', TokenKind::Punct(Punct::Colon), self.remainder),
             sp!(';') => st!(';', TokenKind::Punct(Punct::Semi), self.remainder),
+            sp!('@') => st!('@', TokenKind::Punct(Punct::At), self.remainder),
             sp!('.') => st!('.', TokenKind::Punct(Punct::Dot), self.remainder),
             ('"', _) => {
                 let mut escaped = false;
