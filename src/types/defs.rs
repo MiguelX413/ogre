@@ -57,6 +57,8 @@ pub enum Punct {
     Not,
     And,
     Or,
+    Shl,
+    Shr,
     Eq,
     Ne,
     Gt,

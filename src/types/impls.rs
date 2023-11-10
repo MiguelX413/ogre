@@ -16,6 +16,8 @@ impl Display for Punct {
             Self::Not => write!(f, "!"),
             Self::And => write!(f, "&"),
             Self::Or => write!(f, "|"),
+            Self::Shl => write!(f, "<<"),
+            Self::Shr => write!(f, ">>"),
             Self::Eq => write!(f, "=="),
             Self::Ne => write!(f, "!="),
             Self::Gt => write!(f, ">"),

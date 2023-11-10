@@ -110,6 +110,8 @@ impl<'a> Iterator for SplitTokens<'a> {
             sp!('∧') => st!('∧', TokenKind::Punct(Punct::And), self.remainder),
             sp!('|') => st!('|', TokenKind::Punct(Punct::Or), self.remainder),
             sp!('∨') => st!('∨', TokenKind::Punct(Punct::Or), self.remainder),
+            sp!('<', '<') => st!('<', '<', TokenKind::Punct(Punct::Shl), self.remainder),
+            sp!('>', '>') => st!('>', '>', TokenKind::Punct(Punct::Shr), self.remainder),
             sp!('=', '=') => st!('=', '=', TokenKind::Punct(Punct::Eq), self.remainder),
             sp!('!', '=') => st!('!', '=', TokenKind::Punct(Punct::Ne), self.remainder),
             sp!('!') => st!('!', TokenKind::Punct(Punct::Not), self.remainder),
