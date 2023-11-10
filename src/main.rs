@@ -63,6 +63,7 @@ impl<'a> Iterator for SplitTokens<'a> {
 
         let mut chars = self.remainder.chars();
         match (chars.next()?, chars.next().map(|c| (c, chars.next()))) {
+            // Number Literals
             ('0'..='9', _) | ('+' | '-', Some(('0'..='9', _))) => {
                 let (token, remainder) = self.remainder.split_at(
                     self.remainder
@@ -77,6 +78,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                     remainder,
                 )))
             }
+            // Comments
             sp!('/', '/', '/') => {
                 let (token, remainder) = self
                     .remainder
@@ -95,6 +97,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                     remainder,
                 )))
             }
+            // Puncts
             sp!(':', '=') => st!(':', '=', TokenKind::Punct(Punct::Assign), self.remainder),
             sp!('≔') => st!('≔', TokenKind::Punct(Punct::Assign), self.remainder),
             sp!('+') => st!('+', TokenKind::Punct(Punct::Plus), self.remainder),
@@ -133,6 +136,7 @@ impl<'a> Iterator for SplitTokens<'a> {
             sp!('=', '>') => st!('=', '>', TokenKind::Punct(Punct::FatArrow), &self.remainder),
             sp!('∀') => st!('∀', TokenKind::Punct(Punct::ForAll), self.remainder),
             sp!('∃') => st!('∃', TokenKind::Punct(Punct::Exists), self.remainder),
+            // Delimiters
             sp!('{') => st!(
                 '{',
                 TokenKind::Delimiter(Delimiter::CurlyLeft),
@@ -163,6 +167,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                 TokenKind::Delimiter(Delimiter::ParRight),
                 self.remainder
             ),
+            // String Literals
             ('"', _) => {
                 let mut escaped = false;
                 let Some(index) = self
@@ -220,6 +225,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                     Err(e) => Some(Err(e)),
                 }
             }
+            // Proper Ident
             (c, _) if c.is_alphabetic() & c.is_uppercase() => {
                 let (token, remainder) = self.remainder.split_at(
                     self.remainder
@@ -231,6 +237,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                 }
                 Some(Ok((Token::new(TokenKind::ProperIdent, token), remainder)))
             }
+            // Ident
             (c, _) if c.is_alphabetic() | (c == '_') => {
                 let (token, remainder) = self.remainder.split_at(
                     self.remainder
