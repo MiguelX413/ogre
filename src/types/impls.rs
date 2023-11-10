@@ -30,6 +30,7 @@ impl Display for Punct {
             Self::ColonColon => write!(f, "::"),
             Self::RArrow => write!(f, "->"),
             Self::FatArrow => write!(f, "=>"),
+            Self::Tilde => write!(f, "~"),
             Self::ForAll => write!(f, "∀"),
             Self::Exists => write!(f, "∃"),
         }

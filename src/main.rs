@@ -134,6 +134,7 @@ impl<'a> Iterator for SplitTokens<'a> {
             sp!('-', '>') => st!('-', '>', TokenKind::Punct(Punct::RArrow), self.remainder),
             sp!('-') => st!('-', TokenKind::Punct(Punct::Minus), self.remainder),
             sp!('=', '>') => st!('=', '>', TokenKind::Punct(Punct::FatArrow), &self.remainder),
+            sp!('~') => st!('~', TokenKind::Punct(Punct::Tilde), self.remainder),
             sp!('∀') => st!('∀', TokenKind::Punct(Punct::ForAll), self.remainder),
             sp!('∃') => st!('∃', TokenKind::Punct(Punct::Exists), self.remainder),
             // Delimiters

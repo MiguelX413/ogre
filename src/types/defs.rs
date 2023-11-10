@@ -71,6 +71,7 @@ pub enum Punct {
     ColonColon,
     RArrow,
     FatArrow,
+    Tilde,
     ForAll,
     Exists,
 }
