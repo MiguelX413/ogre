@@ -58,9 +58,10 @@ impl Display for Keyword {
             Self::False => write!(f, "false"),
             Self::Let => write!(f, "let"),
             Self::Type => write!(f, "type"),
-            Self::Return => write!(f, "return"),
+            Self::Ret => write!(f, "ret"),
             Self::Gen => write!(f, "gen"),
             Self::Func => write!(f, "func"),
+            Self::Where => write!(f, "where"),
         }
     }
 }

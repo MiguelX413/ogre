@@ -29,9 +29,10 @@ pub enum Keyword {
     False,
     Let,
     Type,
-    Return,
+    Ret,
     Gen,
     Func,
+    Where,
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
