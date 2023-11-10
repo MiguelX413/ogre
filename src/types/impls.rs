@@ -26,6 +26,7 @@ impl Display for Punct {
             Self::Comma => write!(f, ","),
             Self::Semi => write!(f, ";"),
             Self::Colon => write!(f, ":"),
+            Self::ColonColon => write!(f, "::"),
             Self::RArrow => write!(f, "->"),
             Self::FatArrow => write!(f, "=>"),
         }

@@ -64,6 +64,7 @@ pub enum Punct {
     Comma,
     Semi,
     Colon,
+    ColonColon,
     RArrow,
     FatArrow,
 }

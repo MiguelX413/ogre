@@ -145,6 +145,12 @@ impl<'a> Iterator for SplitTokens<'a> {
                 self.remainder
             ),
             sp!(',') => st!(',', TokenKind::Punct(Punct::Comma), self.remainder),
+            sp!(':', ':') => st!(
+                ':',
+                ':',
+                TokenKind::Punct(Punct::ColonColon),
+                self.remainder
+            ),
             sp!(':') => st!(':', TokenKind::Punct(Punct::Colon), self.remainder),
             sp!(';') => st!(';', TokenKind::Punct(Punct::Semi), self.remainder),
             sp!('.') => st!('.', TokenKind::Punct(Punct::Dot), self.remainder),
