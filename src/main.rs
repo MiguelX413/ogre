@@ -289,6 +289,10 @@ impl<'a> Iterator for SplitTokens<'a> {
             })
         })
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (0, Some(self.remainder.len()))
+    }
 }
 
 pub fn split_tokens(string: &str) -> SplitTokens {
