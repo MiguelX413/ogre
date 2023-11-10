@@ -60,7 +60,7 @@ pub enum Punct {
     Shl,
     Shr,
     Eq,
-    Ne,
+    EqEq,
     Gt,
     Lt,
     Ge,
