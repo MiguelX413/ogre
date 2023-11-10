@@ -47,6 +47,8 @@ pub enum Literal {
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Punct {
     Assign,
+    PlusPlus,
+    MinusMinus,
     Plus,
     Minus,
     Star,

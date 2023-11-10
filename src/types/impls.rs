@@ -6,6 +6,8 @@ impl Display for Punct {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Assign => write!(f, ":="),
+            Self::PlusPlus => write!(f, "++"),
+            Self::MinusMinus => write!(f, "--"),
             Self::Plus => write!(f, "+"),
             Self::Minus => write!(f, "-"),
             Self::Star => write!(f, "*"),
