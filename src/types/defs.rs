@@ -71,6 +71,8 @@ pub enum Punct {
     ColonColon,
     RArrow,
     FatArrow,
+    ForAll,
+    Exists,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
