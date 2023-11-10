@@ -33,24 +33,24 @@ macro_rules! sp {
 
 macro_rules! st {
     ($char:expr, $token_kind:expr, $remainder:expr) => {{
-        const CHAR: char = $char;
-        const LEN: usize = CHAR.len_utf8();
+        let char: char = $char;
+        let len: usize = char.len_utf8();
         let token_kind: crate::types::defs::TokenKind = $token_kind;
         let remainder: &str = $remainder;
         Some(Ok((
-            crate::types::defs::Token::new(token_kind, &remainder[..LEN]),
-            &remainder[LEN..],
+            crate::types::defs::Token::new(token_kind, &remainder[..len]),
+            &remainder[len..],
         )))
     }};
     ($char1:expr, $char2:expr, $token_kind:expr, $remainder:expr) => {{
-        const CHAR1: char = $char1;
-        const CHAR2: char = $char2;
-        const LEN: usize = CHAR1.len_utf8() + CHAR2.len_utf8();
+        let char1: char = $char1;
+        let char2: char = $char2;
+        let len: usize = char1.len_utf8() + char2.len_utf8();
         let token_kind: crate::types::defs::TokenKind = $token_kind;
         let remainder: &str = $remainder;
         Some(Ok((
-            crate::types::defs::Token::new(token_kind, &remainder[..LEN]),
-            &remainder[LEN..],
+            crate::types::defs::Token::new(token_kind, &remainder[..len]),
+            &remainder[len..],
         )))
     }};
 }
