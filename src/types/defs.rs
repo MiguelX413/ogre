@@ -33,6 +33,8 @@ pub enum Keyword {
     Gen,
     Func,
     Where,
+    Miguel,
+    Kyasig,
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]

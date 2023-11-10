@@ -63,6 +63,8 @@ impl Display for Keyword {
             Self::Gen => write!(f, "gen"),
             Self::Func => write!(f, "func"),
             Self::Where => write!(f, "where"),
+            Self::Miguel => write!(f, "miguel"),
+            Self::Kyasig => write!(f, "kyasig"),
         }
     }
 }

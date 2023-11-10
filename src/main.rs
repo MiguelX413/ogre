@@ -248,6 +248,8 @@ impl<'a> Iterator for SplitTokens<'a> {
                             "gen" => TokenKind::Keyword(Keyword::Gen),
                             "func" => TokenKind::Keyword(Keyword::Func),
                             "where" => TokenKind::Keyword(Keyword::Where),
+                            "miguel" => TokenKind::Keyword(Keyword::Miguel),
+                            "kyasig" => TokenKind::Keyword(Keyword::Kyasig),
                             _ => TokenKind::Ident,
                         },
                         token,
