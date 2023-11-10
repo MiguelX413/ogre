@@ -64,6 +64,7 @@ pub enum Punct {
     Ge,
     Le,
     At,
+    Underscore,
     Dot,
     Comma,
     Semi,

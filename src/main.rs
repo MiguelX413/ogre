@@ -266,6 +266,8 @@ impl<'a> Iterator for SplitTokens<'a> {
                             "where" => TokenKind::Keyword(Keyword::Where),
                             "miguel" => TokenKind::Keyword(Keyword::Miguel),
                             "kyasig" => TokenKind::Keyword(Keyword::Kyasig),
+                            // Underscore Punct
+                            "_" => TokenKind::Punct(Punct::Underscore),
                             _ => TokenKind::Ident,
                         },
                         token,
@@ -308,6 +310,7 @@ pub fn main() {
 let xd: Int := 2;
 let multi_line_str := "xd\
 sus";"#,
+        "let _ := 5;",
     ]
     .into_iter()
     .for_each(|string| {

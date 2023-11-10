@@ -23,6 +23,7 @@ impl Display for Punct {
             Self::Ge => write!(f, ">="),
             Self::Le => write!(f, "<="),
             Self::At => write!(f, "@"),
+            Self::Underscore => write!(f, "_"),
             Self::Dot => write!(f, "."),
             Self::Comma => write!(f, ","),
             Self::Semi => write!(f, ";"),
