@@ -201,39 +201,40 @@ impl<'a> Iterator for SplitTokens<'a> {
                     return Some(Err(ParseTokenError::UnterminatedString));
                 };
                 let mut escaped = false;
-                match self.remainder[1..index]
-                    .chars()
-                    .filter_map(|c| match (c, escaped) {
-                        ('\\', false) => {
-                            escaped = true;
-                            None
-                        }
-                        (cc, true) => {
-                            escaped = false;
-                            match cc {
-                                '\\' => Some(Ok('\\')),
-                                '\n' => None,
-                                'n' => Some(Ok('\n')),
-                                't' => Some(Ok('\t')),
-                                '0' => Some(Ok('\0')),
-                                '"' => Some(Ok('"')),
-                                '\'' => Some(Ok('\'')),
-                                ccc => Some(Err(ParseTokenError::InvalidEscape(ccc))),
+                Some(
+                    self.remainder[1..index]
+                        .chars()
+                        .filter_map(|c| match (c, escaped) {
+                            ('\\', false) => {
+                                escaped = true;
+                                None
                             }
-                        }
-                        (c, false) => Some(Ok(c)),
-                    })
-                    .collect::<Result<_, _>>()
-                {
-                    Ok(string) => Some(Ok((
-                        Token::new(
-                            TokenKind::Literal(Literal::String(string)),
-                            &self.remainder[..=index],
-                        ),
-                        &self.remainder[index + 1..],
-                    ))),
-                    Err(e) => Some(Err(e)),
-                }
+                            (cc, true) => {
+                                escaped = false;
+                                match cc {
+                                    '\\' => Some(Ok('\\')),
+                                    '\n' => None,
+                                    'n' => Some(Ok('\n')),
+                                    't' => Some(Ok('\t')),
+                                    '0' => Some(Ok('\0')),
+                                    '"' => Some(Ok('"')),
+                                    '\'' => Some(Ok('\'')),
+                                    ccc => Some(Err(ParseTokenError::InvalidEscape(ccc))),
+                                }
+                            }
+                            (c, false) => Some(Ok(c)),
+                        })
+                        .collect::<Result<_, _>>()
+                        .map(|s| {
+                            (
+                                Token::new(
+                                    TokenKind::Literal(Literal::String(s)),
+                                    &self.remainder[..=index],
+                                ),
+                                &self.remainder[index + 1..],
+                            )
+                        }),
+                )
             }
             // Proper Ident
             (c, _) if c.is_alphabetic() & c.is_uppercase() => {
