@@ -37,10 +37,10 @@ macro_rules! st {
         let len: usize = char.len_utf8();
         let token_kind: crate::types::defs::TokenKind = $token_kind;
         let remainder: &str = $remainder;
-        Some(Ok((
+        Ok((
             crate::types::defs::Token::new(token_kind, &remainder[..len]),
             &remainder[len..],
-        )))
+        ))
     }};
     ($char1:expr, $char2:expr, $token_kind:expr, $remainder:expr) => {{
         let char1: char = $char1;
@@ -48,10 +48,10 @@ macro_rules! st {
         let len: usize = char1.len_utf8() + char2.len_utf8();
         let token_kind: crate::types::defs::TokenKind = $token_kind;
         let remainder: &str = $remainder;
-        Some(Ok((
+        Ok((
             crate::types::defs::Token::new(token_kind, &remainder[..len]),
             &remainder[len..],
-        )))
+        ))
     }};
 }
 
@@ -62,146 +62,147 @@ impl<'a> Iterator for SplitTokens<'a> {
         self.remainder = self.remainder.trim();
 
         let mut chars = self.remainder.chars();
-        match (chars.next()?, chars.next().map(|c| (c, chars.next()))) {
-            // Number Literals
-            ('0'..='9', _) | ('+' | '-', Some(('0'..='9', _))) => {
-                let (token, remainder) = self.remainder.split_at(
+        Some(
+            match (chars.next()?, chars.next().map(|c| (c, chars.next()))) {
+                // Number Literals
+                ('0'..='9', _) | ('+' | '-', Some(('0'..='9', _))) => {
+                    let (token, remainder) = self.remainder.split_at(
+                        self.remainder
+                            .char_indices()
+                            .skip(1)
+                            .find(|(_, f)| !(f.is_ascii_digit()))
+                            .map(|(i, _)| i)
+                            .unwrap_or(self.remainder.len()),
+                    );
+                    Ok((
+                        Token::new(TokenKind::Literal(Literal::Number), token),
+                        remainder,
+                    ))
+                }
+                // Comments
+                sp!('/', '/', '/') => {
+                    let (token, remainder) = self
+                        .remainder
+                        .split_at(self.remainder.find('\n').unwrap_or(self.remainder.len()));
+                    Ok((
+                        Token::new(TokenKind::Comment(Comment::DocComment), token),
+                        remainder,
+                    ))
+                }
+                sp!('/', '/') => {
+                    let (token, remainder) = self
+                        .remainder
+                        .split_at(self.remainder.find('\n').unwrap_or(self.remainder.len()));
+                    Ok((
+                        Token::new(TokenKind::Comment(Comment::Comment), token),
+                        remainder,
+                    ))
+                }
+                // Puncts
+                sp!(':', '=') => st!(':', '=', TokenKind::Punct(Punct::Assign), self.remainder),
+                sp!('+', '+') => st!('+', '+', TokenKind::Punct(Punct::PlusPlus), self.remainder),
+                sp!('-', '-') => st!(
+                    '-',
+                    '-',
+                    TokenKind::Punct(Punct::MinusMinus),
                     self.remainder
+                ),
+                sp!('≔') => st!('≔', TokenKind::Punct(Punct::Assign), self.remainder),
+                sp!('+') => st!('+', TokenKind::Punct(Punct::Plus), self.remainder),
+                sp!('/') => st!('/', TokenKind::Punct(Punct::Slash), self.remainder),
+                sp!('*', '*') => st!('*', '*', TokenKind::Punct(Punct::StarStar), self.remainder),
+                sp!('*') => st!('*', TokenKind::Punct(Punct::Star), self.remainder),
+                sp!('%') => st!('%', TokenKind::Punct(Punct::Percent), self.remainder),
+                sp!('^') => st!('^', TokenKind::Punct(Punct::Caret), self.remainder),
+                sp!('&') => st!('&', TokenKind::Punct(Punct::And), self.remainder),
+                sp!('∧') => st!('∧', TokenKind::Punct(Punct::And), self.remainder),
+                sp!('|') => st!('|', TokenKind::Punct(Punct::Or), self.remainder),
+                sp!('∨') => st!('∨', TokenKind::Punct(Punct::Or), self.remainder),
+                sp!('<', '<') => st!('<', '<', TokenKind::Punct(Punct::Shl), self.remainder),
+                sp!('>', '>') => st!('>', '>', TokenKind::Punct(Punct::Shr), self.remainder),
+                sp!('=', '=') => st!('=', '=', TokenKind::Punct(Punct::EqEq), self.remainder),
+                sp!('!') => st!('!', TokenKind::Punct(Punct::Not), self.remainder),
+                sp!('¬') => st!('¬', TokenKind::Punct(Punct::Not), self.remainder),
+                sp!('>', '=') => st!('>', '=', TokenKind::Punct(Punct::Ge), self.remainder),
+                sp!('≥') => st!('≥', TokenKind::Punct(Punct::Ge), self.remainder),
+                sp!('<', '=') => st!('<', '=', TokenKind::Punct(Punct::Le), self.remainder),
+                sp!('≤') => st!('≤', TokenKind::Punct(Punct::Le), self.remainder),
+                sp!('>') => st!('>', TokenKind::Punct(Punct::Gt), self.remainder),
+                sp!('<') => st!('<', TokenKind::Punct(Punct::Lt), self.remainder),
+                sp!('@') => st!('@', TokenKind::Punct(Punct::At), self.remainder),
+                sp!('.') => st!('.', TokenKind::Punct(Punct::Dot), self.remainder),
+                sp!(',') => st!(',', TokenKind::Punct(Punct::Comma), self.remainder),
+                sp!(';') => st!(';', TokenKind::Punct(Punct::Semi), self.remainder),
+                sp!(':', ':') => st!(
+                    ':',
+                    ':',
+                    TokenKind::Punct(Punct::ColonColon),
+                    self.remainder
+                ),
+                sp!(':') => st!(':', TokenKind::Punct(Punct::Colon), self.remainder),
+                sp!('-', '>') => st!('-', '>', TokenKind::Punct(Punct::RArrow), self.remainder),
+                sp!('-') => st!('-', TokenKind::Punct(Punct::Minus), self.remainder),
+                sp!('=', '>') => st!('=', '>', TokenKind::Punct(Punct::FatArrow), &self.remainder),
+                sp!('=') => st!('=', TokenKind::Punct(Punct::Eq), self.remainder),
+                sp!('~') => st!('~', TokenKind::Punct(Punct::Tilde), self.remainder),
+                sp!('∀') => st!('∀', TokenKind::Punct(Punct::ForAll), self.remainder),
+                sp!('∃') => st!('∃', TokenKind::Punct(Punct::Exists), self.remainder),
+                // Delimiters
+                sp!('{') => st!(
+                    '{',
+                    TokenKind::Delimiter(Delimiter::CurlyLeft),
+                    self.remainder
+                ),
+                sp!('}') => st!(
+                    '}',
+                    TokenKind::Delimiter(Delimiter::CurlyRight),
+                    self.remainder
+                ),
+                sp!('[') => st!(
+                    '[',
+                    TokenKind::Delimiter(Delimiter::SquareLeft),
+                    self.remainder
+                ),
+                sp!(']') => st!(
+                    ']',
+                    TokenKind::Delimiter(Delimiter::SquareRight),
+                    self.remainder
+                ),
+                sp!('(') => st!(
+                    '(',
+                    TokenKind::Delimiter(Delimiter::ParLeft),
+                    self.remainder
+                ),
+                sp!(')') => st!(
+                    ')',
+                    TokenKind::Delimiter(Delimiter::ParRight),
+                    self.remainder
+                ),
+                // String Literals
+                ('"', _) => {
+                    let mut escaped = false;
+                    let Some(index) = self
+                        .remainder
                         .char_indices()
                         .skip(1)
-                        .find(|(_, f)| !(f.is_ascii_digit()))
+                        .find(|(_, c)| match (c, escaped) {
+                            ('\\', false) => {
+                                escaped = true;
+                                false
+                            }
+                            ('"', false) => true,
+                            (_, true) => {
+                                escaped = false;
+                                false
+                            }
+                            (_, false) => false,
+                        })
                         .map(|(i, _)| i)
-                        .unwrap_or(self.remainder.len()),
-                );
-                Some(Ok((
-                    Token::new(TokenKind::Literal(Literal::Number), token),
-                    remainder,
-                )))
-            }
-            // Comments
-            sp!('/', '/', '/') => {
-                let (token, remainder) = self
-                    .remainder
-                    .split_at(self.remainder.find('\n').unwrap_or(self.remainder.len()));
-                Some(Ok((
-                    Token::new(TokenKind::Comment(Comment::DocComment), token),
-                    remainder,
-                )))
-            }
-            sp!('/', '/') => {
-                let (token, remainder) = self
-                    .remainder
-                    .split_at(self.remainder.find('\n').unwrap_or(self.remainder.len()));
-                Some(Ok((
-                    Token::new(TokenKind::Comment(Comment::Comment), token),
-                    remainder,
-                )))
-            }
-            // Puncts
-            sp!(':', '=') => st!(':', '=', TokenKind::Punct(Punct::Assign), self.remainder),
-            sp!('+', '+') => st!('+', '+', TokenKind::Punct(Punct::PlusPlus), self.remainder),
-            sp!('-', '-') => st!(
-                '-',
-                '-',
-                TokenKind::Punct(Punct::MinusMinus),
-                self.remainder
-            ),
-            sp!('≔') => st!('≔', TokenKind::Punct(Punct::Assign), self.remainder),
-            sp!('+') => st!('+', TokenKind::Punct(Punct::Plus), self.remainder),
-            sp!('/') => st!('/', TokenKind::Punct(Punct::Slash), self.remainder),
-            sp!('*', '*') => st!('*', '*', TokenKind::Punct(Punct::StarStar), self.remainder),
-            sp!('*') => st!('*', TokenKind::Punct(Punct::Star), self.remainder),
-            sp!('%') => st!('%', TokenKind::Punct(Punct::Percent), self.remainder),
-            sp!('^') => st!('^', TokenKind::Punct(Punct::Caret), self.remainder),
-            sp!('&') => st!('&', TokenKind::Punct(Punct::And), self.remainder),
-            sp!('∧') => st!('∧', TokenKind::Punct(Punct::And), self.remainder),
-            sp!('|') => st!('|', TokenKind::Punct(Punct::Or), self.remainder),
-            sp!('∨') => st!('∨', TokenKind::Punct(Punct::Or), self.remainder),
-            sp!('<', '<') => st!('<', '<', TokenKind::Punct(Punct::Shl), self.remainder),
-            sp!('>', '>') => st!('>', '>', TokenKind::Punct(Punct::Shr), self.remainder),
-            sp!('=', '=') => st!('=', '=', TokenKind::Punct(Punct::EqEq), self.remainder),
-            sp!('!') => st!('!', TokenKind::Punct(Punct::Not), self.remainder),
-            sp!('¬') => st!('¬', TokenKind::Punct(Punct::Not), self.remainder),
-            sp!('>', '=') => st!('>', '=', TokenKind::Punct(Punct::Ge), self.remainder),
-            sp!('≥') => st!('≥', TokenKind::Punct(Punct::Ge), self.remainder),
-            sp!('<', '=') => st!('<', '=', TokenKind::Punct(Punct::Le), self.remainder),
-            sp!('≤') => st!('≤', TokenKind::Punct(Punct::Le), self.remainder),
-            sp!('>') => st!('>', TokenKind::Punct(Punct::Gt), self.remainder),
-            sp!('<') => st!('<', TokenKind::Punct(Punct::Lt), self.remainder),
-            sp!('@') => st!('@', TokenKind::Punct(Punct::At), self.remainder),
-            sp!('.') => st!('.', TokenKind::Punct(Punct::Dot), self.remainder),
-            sp!(',') => st!(',', TokenKind::Punct(Punct::Comma), self.remainder),
-            sp!(';') => st!(';', TokenKind::Punct(Punct::Semi), self.remainder),
-            sp!(':', ':') => st!(
-                ':',
-                ':',
-                TokenKind::Punct(Punct::ColonColon),
-                self.remainder
-            ),
-            sp!(':') => st!(':', TokenKind::Punct(Punct::Colon), self.remainder),
-            sp!('-', '>') => st!('-', '>', TokenKind::Punct(Punct::RArrow), self.remainder),
-            sp!('-') => st!('-', TokenKind::Punct(Punct::Minus), self.remainder),
-            sp!('=', '>') => st!('=', '>', TokenKind::Punct(Punct::FatArrow), &self.remainder),
-            sp!('=') => st!('=', TokenKind::Punct(Punct::Eq), self.remainder),
-            sp!('~') => st!('~', TokenKind::Punct(Punct::Tilde), self.remainder),
-            sp!('∀') => st!('∀', TokenKind::Punct(Punct::ForAll), self.remainder),
-            sp!('∃') => st!('∃', TokenKind::Punct(Punct::Exists), self.remainder),
-            // Delimiters
-            sp!('{') => st!(
-                '{',
-                TokenKind::Delimiter(Delimiter::CurlyLeft),
-                self.remainder
-            ),
-            sp!('}') => st!(
-                '}',
-                TokenKind::Delimiter(Delimiter::CurlyRight),
-                self.remainder
-            ),
-            sp!('[') => st!(
-                '[',
-                TokenKind::Delimiter(Delimiter::SquareLeft),
-                self.remainder
-            ),
-            sp!(']') => st!(
-                ']',
-                TokenKind::Delimiter(Delimiter::SquareRight),
-                self.remainder
-            ),
-            sp!('(') => st!(
-                '(',
-                TokenKind::Delimiter(Delimiter::ParLeft),
-                self.remainder
-            ),
-            sp!(')') => st!(
-                ')',
-                TokenKind::Delimiter(Delimiter::ParRight),
-                self.remainder
-            ),
-            // String Literals
-            ('"', _) => {
-                let mut escaped = false;
-                let Some(index) = self
-                    .remainder
-                    .char_indices()
-                    .skip(1)
-                    .find(|(_, c)| match (c, escaped) {
-                        ('\\', false) => {
-                            escaped = true;
-                            false
-                        }
-                        ('"', false) => true,
-                        (_, true) => {
-                            escaped = false;
-                            false
-                        }
-                        (_, false) => false,
-                    })
-                    .map(|(i, _)| i)
-                else {
-                    return Some(Err(ParseTokenError::UnterminatedString));
-                };
-                let mut escaped = false;
-                Some(
+                    else {
+                        return Some(Err(ParseTokenError::UnterminatedString));
+                    };
+                    let mut escaped = false;
+
                     self.remainder[1..index]
                         .chars()
                         .filter_map(|c| match (c, escaped) {
@@ -233,69 +234,67 @@ impl<'a> Iterator for SplitTokens<'a> {
                                 ),
                                 &self.remainder[index + 1..],
                             )
-                        }),
-                )
-            }
-            // Proper Ident
-            (c, _) if c.is_alphabetic() & c.is_uppercase() => {
-                let (token, remainder) = self.remainder.split_at(
-                    self.remainder
-                        .find(|c: char| !(c.is_alphanumeric() | (c == '_')))
-                        .unwrap_or(self.remainder.len()),
-                );
-                if let Some(i) = token.find('_') {
-                    return Some(Err(ParseTokenError::UnderscoreInProper(token, i)));
+                        })
                 }
-                Some(Ok((Token::new(TokenKind::ProperIdent, token), remainder)))
-            }
-            // Ident
-            (c, _) if c.is_alphabetic() | (c == '_') => {
-                let (token, remainder) = self.remainder.split_at(
-                    self.remainder
-                        .find(|c: char| !(c.is_alphanumeric() | (c == '_')))
-                        .unwrap_or(self.remainder.len()),
-                );
-                if let Some(i) = token.find(char::is_uppercase) {
-                    return Some(Err(ParseTokenError::CapsInImproperIdent(token, i)));
+                // Proper Ident
+                (c, _) if c.is_alphabetic() & c.is_uppercase() => {
+                    let (token, remainder) = self.remainder.split_at(
+                        self.remainder
+                            .find(|c: char| !(c.is_alphanumeric() | (c == '_')))
+                            .unwrap_or(self.remainder.len()),
+                    );
+                    if let Some(i) = token.find('_') {
+                        return Some(Err(ParseTokenError::UnderscoreInProper(token, i)));
+                    }
+                    Ok((Token::new(TokenKind::ProperIdent, token), remainder))
                 }
-                Some(Ok((
-                    Token::new(
-                        match token {
-                            "if" => TokenKind::Keyword(Keyword::If),
-                            "else" => TokenKind::Keyword(Keyword::Else),
-                            "match" => TokenKind::Keyword(Keyword::Match),
-                            "while" => TokenKind::Keyword(Keyword::While),
-                            "loop" => TokenKind::Keyword(Keyword::Loop),
-                            "true" => TokenKind::Keyword(Keyword::True),
-                            "false" => TokenKind::Keyword(Keyword::False),
-                            "let" => TokenKind::Keyword(Keyword::Let),
-                            "type" => TokenKind::Keyword(Keyword::Type),
-                            "typeclass" => TokenKind::Keyword(Keyword::Typeclass),
-                            "ret" => TokenKind::Keyword(Keyword::Ret),
-                            "gen" => TokenKind::Keyword(Keyword::Gen),
-                            "where" => TokenKind::Keyword(Keyword::Where),
-                            "miguel" => TokenKind::Keyword(Keyword::Miguel),
-                            "kyasig" => TokenKind::Keyword(Keyword::Kyasig),
-                            // Underscore Punct
-                            "_" => TokenKind::Punct(Punct::Underscore),
-                            _ => TokenKind::Ident,
-                        },
-                        token,
-                    ),
-                    remainder,
-                )))
+                // Ident
+                (c, _) if c.is_alphabetic() | (c == '_') => {
+                    let (token, remainder) = self.remainder.split_at(
+                        self.remainder
+                            .find(|c: char| !(c.is_alphanumeric() | (c == '_')))
+                            .unwrap_or(self.remainder.len()),
+                    );
+                    if let Some(i) = token.find(char::is_uppercase) {
+                        return Some(Err(ParseTokenError::CapsInImproperIdent(token, i)));
+                    }
+                    Ok((
+                        Token::new(
+                            match token {
+                                "if" => TokenKind::Keyword(Keyword::If),
+                                "else" => TokenKind::Keyword(Keyword::Else),
+                                "match" => TokenKind::Keyword(Keyword::Match),
+                                "while" => TokenKind::Keyword(Keyword::While),
+                                "loop" => TokenKind::Keyword(Keyword::Loop),
+                                "true" => TokenKind::Keyword(Keyword::True),
+                                "false" => TokenKind::Keyword(Keyword::False),
+                                "let" => TokenKind::Keyword(Keyword::Let),
+                                "type" => TokenKind::Keyword(Keyword::Type),
+                                "typeclass" => TokenKind::Keyword(Keyword::Typeclass),
+                                "ret" => TokenKind::Keyword(Keyword::Ret),
+                                "gen" => TokenKind::Keyword(Keyword::Gen),
+                                "where" => TokenKind::Keyword(Keyword::Where),
+                                "miguel" => TokenKind::Keyword(Keyword::Miguel),
+                                "kyasig" => TokenKind::Keyword(Keyword::Kyasig),
+                                // Underscore Punct
+                                "_" => TokenKind::Punct(Punct::Underscore),
+                                _ => TokenKind::Ident,
+                            },
+                            token,
+                        ),
+                        remainder,
+                    ))
+                }
+                (c, _) => Err(ParseTokenError::InvalidChar(
+                    c,
+                    &self.remainder[..c.len_utf8()],
+                )),
             }
-            (c, _) => Some(Err(ParseTokenError::InvalidChar(
-                c,
-                &self.remainder[..c.len_utf8()],
-            ))),
-        }
-        .map(|f| {
-            f.map(|(token, remainder)| {
+            .map(|(token, remainder)| {
                 self.remainder = remainder;
                 token
-            })
-        })
+            }),
+        )
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
