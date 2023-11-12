@@ -1,3 +1,27 @@
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub struct Span {
+    pub start: LineColumn,
+    pub end: LineColumn,
+}
+
+impl Span {
+    pub fn new(start: LineColumn, end: LineColumn) -> Self {
+        Self { start, end }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub struct LineColumn {
+    pub line: usize,
+    pub column: usize,
+}
+
+impl LineColumn {
+    pub fn new(line: usize, column: usize) -> Self {
+        Self { line, column }
+    }
+}
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Token<'a>(TokenKind, &'a str);
 
