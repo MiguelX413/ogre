@@ -1,4 +1,4 @@
-use crate::types::defs::{
+pub use crate::types::{
     Comment, Delimiter, Keyword, Literal, ParseTokenError, Punct, Token, TokenKind,
 };
 
@@ -35,10 +35,10 @@ macro_rules! st {
     ($char:expr, $token_kind:expr, $remainder:expr) => {{
         let char: char = $char;
         let len: usize = char.len_utf8();
-        let token_kind: crate::types::defs::TokenKind = $token_kind;
+        let token_kind: crate::types::TokenKind = $token_kind;
         let remainder: &str = $remainder;
         Ok((
-            crate::types::defs::Token::new(token_kind, &remainder[..len]),
+            crate::types::Token::new(token_kind, &remainder[..len]),
             &remainder[len..],
         ))
     }};
@@ -46,10 +46,10 @@ macro_rules! st {
         let char1: char = $char1;
         let char2: char = $char2;
         let len: usize = char1.len_utf8() + char2.len_utf8();
-        let token_kind: crate::types::defs::TokenKind = $token_kind;
+        let token_kind: crate::types::TokenKind = $token_kind;
         let remainder: &str = $remainder;
         Ok((
-            crate::types::defs::Token::new(token_kind, &remainder[..len]),
+            crate::types::Token::new(token_kind, &remainder[..len]),
             &remainder[len..],
         ))
     }};
