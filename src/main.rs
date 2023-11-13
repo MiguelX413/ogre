@@ -34,19 +34,39 @@ macro_rules! sp {
     };
 }
 macro_rules! st {
-    ($char:expr, $token_kind:expr, $remainder:expr) => {{
+    ($char:expr, $token_kind:expr, $self:expr) => {{
         let char: char = $char;
         let len: usize = char.len_utf8();
         let token_kind: crate::types::TokenKind = $token_kind;
-        let (token, remainder): (&str, &str) = $remainder.split_at(len);
-        Ok(((token_kind, token), remainder))
+        let (token, remainder): (&str, &str) = $self.remainder.split_at(len);
+        Ok((
+            Token::new(
+                token_kind,
+                token,
+                Span::new(
+                    $self.line_column,
+                    LineColumn::new($self.line_column.line, $self.line_column.column + 1),
+                ),
+            ),
+            remainder,
+        ))
     }};
-    ($char1:expr, $char2:expr, $token_kind:expr, $remainder:expr) => {{
+    ($char1:expr, $char2:expr, $token_kind:expr, $self:expr) => {{
         let (char1, char2): (char, char) = ($char1, $char2);
         let len: usize = char1.len_utf8() + char2.len_utf8();
         let token_kind: crate::types::TokenKind = $token_kind;
-        let (token, remainder): (&str, &str) = $remainder.split_at(len);
-        Ok(((token_kind, token), remainder))
+        let (token, remainder): (&str, &str) = $self.remainder.split_at(len);
+        Ok((
+            Token::new(
+                token_kind,
+                token,
+                Span::new(
+                    $self.line_column,
+                    LineColumn::new($self.line_column.line, $self.line_column.column + 2),
+                ),
+            ),
+            remainder,
+        ))
     }};
 }
 
@@ -77,101 +97,88 @@ impl<'a> Iterator for SplitTokens<'a> {
                             .map(|(i, _)| i)
                             .unwrap_or(self.remainder.len()),
                     );
-                    Ok(((TokenKind::Literal(Literal::Number), token), remainder))
+                    Ok((
+                        Token::new_auto_span(
+                            TokenKind::Literal(Literal::Number),
+                            token,
+                            self.line_column,
+                        ),
+                        remainder,
+                    ))
                 }
                 // Comments
                 sp!('/', '/', '/') => {
                     let (token, remainder) = self
                         .remainder
                         .split_at(self.remainder.find('\n').unwrap_or(self.remainder.len()));
-                    Ok(((TokenKind::Comment(Comment::DocComment), token), remainder))
+                    Ok((
+                        Token::new_auto_span(
+                            TokenKind::Comment(Comment::DocComment),
+                            token,
+                            self.line_column,
+                        ),
+                        remainder,
+                    ))
                 }
                 sp!('/', '/') => {
                     let (token, remainder) = self
                         .remainder
                         .split_at(self.remainder.find('\n').unwrap_or(self.remainder.len()));
-                    Ok(((TokenKind::Comment(Comment::Comment), token), remainder))
+                    Ok((
+                        Token::new_auto_span(
+                            TokenKind::Comment(Comment::Comment),
+                            token,
+                            self.line_column,
+                        ),
+                        remainder,
+                    ))
                 }
                 // Puncts
-                sp!(':', '=') => st!(':', '=', TokenKind::Punct(Punct::Assign), self.remainder),
-                sp!('+', '+') => st!('+', '+', TokenKind::Punct(Punct::PlusPlus), self.remainder),
-                sp!('-', '-') => st!(
-                    '-',
-                    '-',
-                    TokenKind::Punct(Punct::MinusMinus),
-                    self.remainder
-                ),
-                sp!('≔') => st!('≔', TokenKind::Punct(Punct::Assign), self.remainder),
-                sp!('+') => st!('+', TokenKind::Punct(Punct::Plus), self.remainder),
-                sp!('/') => st!('/', TokenKind::Punct(Punct::Slash), self.remainder),
-                sp!('*', '*') => st!('*', '*', TokenKind::Punct(Punct::StarStar), self.remainder),
-                sp!('*') => st!('*', TokenKind::Punct(Punct::Star), self.remainder),
-                sp!('%') => st!('%', TokenKind::Punct(Punct::Percent), self.remainder),
-                sp!('^') => st!('^', TokenKind::Punct(Punct::Caret), self.remainder),
-                sp!('&') => st!('&', TokenKind::Punct(Punct::And), self.remainder),
-                sp!('∧') => st!('∧', TokenKind::Punct(Punct::And), self.remainder),
-                sp!('|') => st!('|', TokenKind::Punct(Punct::Or), self.remainder),
-                sp!('∨') => st!('∨', TokenKind::Punct(Punct::Or), self.remainder),
-                sp!('<', '<') => st!('<', '<', TokenKind::Punct(Punct::Shl), self.remainder),
-                sp!('>', '>') => st!('>', '>', TokenKind::Punct(Punct::Shr), self.remainder),
-                sp!('=', '=') => st!('=', '=', TokenKind::Punct(Punct::EqEq), self.remainder),
-                sp!('!') => st!('!', TokenKind::Punct(Punct::Not), self.remainder),
-                sp!('¬') => st!('¬', TokenKind::Punct(Punct::Not), self.remainder),
-                sp!('>', '=') => st!('>', '=', TokenKind::Punct(Punct::Ge), self.remainder),
-                sp!('≥') => st!('≥', TokenKind::Punct(Punct::Ge), self.remainder),
-                sp!('<', '=') => st!('<', '=', TokenKind::Punct(Punct::Le), self.remainder),
-                sp!('≤') => st!('≤', TokenKind::Punct(Punct::Le), self.remainder),
-                sp!('>') => st!('>', TokenKind::Punct(Punct::Gt), self.remainder),
-                sp!('<') => st!('<', TokenKind::Punct(Punct::Lt), self.remainder),
-                sp!('@') => st!('@', TokenKind::Punct(Punct::At), self.remainder),
-                sp!('.') => st!('.', TokenKind::Punct(Punct::Dot), self.remainder),
-                sp!(',') => st!(',', TokenKind::Punct(Punct::Comma), self.remainder),
-                sp!(';') => st!(';', TokenKind::Punct(Punct::Semi), self.remainder),
-                sp!(':', ':') => st!(
-                    ':',
-                    ':',
-                    TokenKind::Punct(Punct::ColonColon),
-                    self.remainder
-                ),
-                sp!(':') => st!(':', TokenKind::Punct(Punct::Colon), self.remainder),
-                sp!('-', '>') => st!('-', '>', TokenKind::Punct(Punct::RArrow), self.remainder),
-                sp!('-') => st!('-', TokenKind::Punct(Punct::Minus), self.remainder),
-                sp!('=', '>') => st!('=', '>', TokenKind::Punct(Punct::FatArrow), &self.remainder),
-                sp!('=') => st!('=', TokenKind::Punct(Punct::Eq), self.remainder),
-                sp!('~') => st!('~', TokenKind::Punct(Punct::Tilde), self.remainder),
-                sp!('∀') => st!('∀', TokenKind::Punct(Punct::ForAll), self.remainder),
-                sp!('∃') => st!('∃', TokenKind::Punct(Punct::Exists), self.remainder),
+                sp!(':', '=') => st!(':', '=', TokenKind::Punct(Punct::Assign), self),
+                sp!('+', '+') => st!('+', '+', TokenKind::Punct(Punct::PlusPlus), self),
+                sp!('-', '-') => st!('-', '-', TokenKind::Punct(Punct::MinusMinus), self),
+                sp!('≔') => st!('≔', TokenKind::Punct(Punct::Assign), self),
+                sp!('+') => st!('+', TokenKind::Punct(Punct::Plus), self),
+                sp!('/') => st!('/', TokenKind::Punct(Punct::Slash), self),
+                sp!('*', '*') => st!('*', '*', TokenKind::Punct(Punct::StarStar), self),
+                sp!('*') => st!('*', TokenKind::Punct(Punct::Star), self),
+                sp!('%') => st!('%', TokenKind::Punct(Punct::Percent), self),
+                sp!('^') => st!('^', TokenKind::Punct(Punct::Caret), self),
+                sp!('&') => st!('&', TokenKind::Punct(Punct::And), self),
+                sp!('∧') => st!('∧', TokenKind::Punct(Punct::And), self),
+                sp!('|') => st!('|', TokenKind::Punct(Punct::Or), self),
+                sp!('∨') => st!('∨', TokenKind::Punct(Punct::Or), self),
+                sp!('<', '<') => st!('<', '<', TokenKind::Punct(Punct::Shl), self),
+                sp!('>', '>') => st!('>', '>', TokenKind::Punct(Punct::Shr), self),
+                sp!('=', '=') => st!('=', '=', TokenKind::Punct(Punct::EqEq), self),
+                sp!('!') => st!('!', TokenKind::Punct(Punct::Not), self),
+                sp!('¬') => st!('¬', TokenKind::Punct(Punct::Not), self),
+                sp!('>', '=') => st!('>', '=', TokenKind::Punct(Punct::Ge), self),
+                sp!('≥') => st!('≥', TokenKind::Punct(Punct::Ge), self),
+                sp!('<', '=') => st!('<', '=', TokenKind::Punct(Punct::Le), self),
+                sp!('≤') => st!('≤', TokenKind::Punct(Punct::Le), self),
+                sp!('>') => st!('>', TokenKind::Punct(Punct::Gt), self),
+                sp!('<') => st!('<', TokenKind::Punct(Punct::Lt), self),
+                sp!('@') => st!('@', TokenKind::Punct(Punct::At), self),
+                sp!('.') => st!('.', TokenKind::Punct(Punct::Dot), self),
+                sp!(',') => st!(',', TokenKind::Punct(Punct::Comma), self),
+                sp!(';') => st!(';', TokenKind::Punct(Punct::Semi), self),
+                sp!(':', ':') => st!(':', ':', TokenKind::Punct(Punct::ColonColon), self),
+                sp!(':') => st!(':', TokenKind::Punct(Punct::Colon), self),
+                sp!('-', '>') => st!('-', '>', TokenKind::Punct(Punct::RArrow), self),
+                sp!('-') => st!('-', TokenKind::Punct(Punct::Minus), self),
+                sp!('=', '>') => st!('=', '>', TokenKind::Punct(Punct::FatArrow), &self),
+                sp!('=') => st!('=', TokenKind::Punct(Punct::Eq), self),
+                sp!('~') => st!('~', TokenKind::Punct(Punct::Tilde), self),
+                sp!('∀') => st!('∀', TokenKind::Punct(Punct::ForAll), self),
+                sp!('∃') => st!('∃', TokenKind::Punct(Punct::Exists), self),
                 // Delimiters
-                sp!('{') => st!(
-                    '{',
-                    TokenKind::Delimiter(Delimiter::CurlyLeft),
-                    self.remainder
-                ),
-                sp!('}') => st!(
-                    '}',
-                    TokenKind::Delimiter(Delimiter::CurlyRight),
-                    self.remainder
-                ),
-                sp!('[') => st!(
-                    '[',
-                    TokenKind::Delimiter(Delimiter::SquareLeft),
-                    self.remainder
-                ),
-                sp!(']') => st!(
-                    ']',
-                    TokenKind::Delimiter(Delimiter::SquareRight),
-                    self.remainder
-                ),
-                sp!('(') => st!(
-                    '(',
-                    TokenKind::Delimiter(Delimiter::ParLeft),
-                    self.remainder
-                ),
-                sp!(')') => st!(
-                    ')',
-                    TokenKind::Delimiter(Delimiter::ParRight),
-                    self.remainder
-                ),
+                sp!('{') => st!('{', TokenKind::Delimiter(Delimiter::CurlyLeft), self),
+                sp!('}') => st!('}', TokenKind::Delimiter(Delimiter::CurlyRight), self),
+                sp!('[') => st!('[', TokenKind::Delimiter(Delimiter::SquareLeft), self),
+                sp!(']') => st!(']', TokenKind::Delimiter(Delimiter::SquareRight), self),
+                sp!('(') => st!('(', TokenKind::Delimiter(Delimiter::ParLeft), self),
+                sp!(')') => st!(')', TokenKind::Delimiter(Delimiter::ParRight), self),
                 // String Literals
                 ('"', _) => {
                     let mut escaped = false;
@@ -195,8 +202,8 @@ impl<'a> Iterator for SplitTokens<'a> {
                     else {
                         return Some(Err(ParseTokenError::UnterminatedString));
                     };
-                    let mut escaped = false;
 
+                    let mut escaped = false;
                     self.remainder[1..index]
                         .chars()
                         .filter_map(|c| match (c, escaped) {
@@ -217,14 +224,15 @@ impl<'a> Iterator for SplitTokens<'a> {
                                     ccc => Some(Err(ParseTokenError::InvalidEscape(ccc))),
                                 }
                             }
-                            (c, false) => Some(Ok(c)),
+                            (cc, false) => Some(Ok(cc)),
                         })
                         .collect::<Result<_, _>>()
                         .map(|s| {
                             (
-                                (
+                                Token::new_auto_span(
                                     TokenKind::Literal(Literal::String(s)),
                                     &self.remainder[..=index],
+                                    self.line_column,
                                 ),
                                 &self.remainder[index + 1..],
                             )
@@ -240,7 +248,10 @@ impl<'a> Iterator for SplitTokens<'a> {
                     if let Some(i) = token.find('_') {
                         return Some(Err(ParseTokenError::UnderscoreInProper(token, i)));
                     }
-                    Ok(((TokenKind::ProperIdent, token), remainder))
+                    Ok((
+                        Token::new_auto_span(TokenKind::ProperIdent, token, self.line_column),
+                        remainder,
+                    ))
                 }
                 // Ident
                 (c, _) if c.is_alphabetic() | (c == '_') => {
@@ -253,7 +264,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                         return Some(Err(ParseTokenError::CapsInImproperIdent(token, i)));
                     }
                     Ok((
-                        (
+                        Token::new_auto_span(
                             match token {
                                 "if" => TokenKind::Keyword(Keyword::If),
                                 "else" => TokenKind::Keyword(Keyword::Else),
@@ -275,6 +286,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                                 _ => TokenKind::Ident,
                             },
                             token,
+                            self.line_column,
                         ),
                         remainder,
                     ))
@@ -284,23 +296,9 @@ impl<'a> Iterator for SplitTokens<'a> {
                     &self.remainder[..c.len_utf8()],
                 )),
             }
-            .map(|((token_kind, s), remainder)| {
-                self.remainder = remainder;
-                Token::new(
-                    token_kind,
-                    s,
-                    Span::new(self.line_column, {
-                        s.chars().for_each(|c| {
-                            if c == '\n' {
-                                self.line_column.column = 0;
-                                self.line_column.line += 1;
-                            } else {
-                                self.line_column.column += 1;
-                            }
-                        });
-                        self.line_column
-                    }),
-                )
+            .map(|(token, remainder)| {
+                (self.line_column, self.remainder) = (token.span.end, remainder);
+                token
             }),
         )
     }

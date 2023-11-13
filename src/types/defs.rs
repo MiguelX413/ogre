@@ -35,11 +35,37 @@ impl From<LineColumn> for (usize, usize) {
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct Token<'a>(TokenKind, &'a str, Span);
+pub struct Token<'a> {
+    pub token_kind: TokenKind,
+    pub s: &'a str,
+    pub span: Span,
+}
 
 impl<'a> Token<'a> {
     pub fn new(token_kind: TokenKind, s: &'a str, span: Span) -> Self {
-        Self(token_kind, s, span)
+        Self {
+            token_kind,
+            s,
+            span,
+        }
+    }
+
+    pub fn new_auto_span(token_kind: TokenKind, s: &'a str, mut line_column: LineColumn) -> Self {
+        Self {
+            token_kind,
+            s,
+            span: Span::new(line_column, {
+                s.chars().for_each(|c| {
+                    if c == '\n' {
+                        line_column.column = 0;
+                        line_column.line += 1;
+                    } else {
+                        line_column.column += 1;
+                    }
+                });
+                line_column
+            }),
+        }
     }
 }
 
