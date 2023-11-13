@@ -1,5 +1,6 @@
 pub use crate::types::{
-    Comment, Delimiter, Keyword, Literal, ParseTokenError, Punct, Token, TokenKind,
+    Comment, Delimiter, Keyword, LineColumn, Literal, ParseTokenError, Punct, Span, Token,
+    TokenKind,
 };
 
 mod types;
@@ -7,6 +8,7 @@ mod types;
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SplitTokens<'a> {
     remainder: &'a str,
+    line_column: LineColumn,
     original: &'a str,
 }
 
@@ -14,6 +16,7 @@ impl<'a> SplitTokens<'a> {
     fn new(string: &str) -> SplitTokens {
         SplitTokens {
             remainder: string,
+            line_column: LineColumn::default(),
             original: string,
         }
     }
@@ -30,28 +33,20 @@ macro_rules! sp {
         ($char1, Some(($char2, Some($char3))))
     };
 }
-
 macro_rules! st {
     ($char:expr, $token_kind:expr, $remainder:expr) => {{
         let char: char = $char;
         let len: usize = char.len_utf8();
         let token_kind: crate::types::TokenKind = $token_kind;
-        let remainder: &str = $remainder;
-        Ok((
-            crate::types::Token::new(token_kind, &remainder[..len]),
-            &remainder[len..],
-        ))
+        let (token, remainder): (&str, &str) = $remainder.split_at(len);
+        Ok(((token_kind, token), remainder))
     }};
     ($char1:expr, $char2:expr, $token_kind:expr, $remainder:expr) => {{
-        let char1: char = $char1;
-        let char2: char = $char2;
+        let (char1, char2): (char, char) = ($char1, $char2);
         let len: usize = char1.len_utf8() + char2.len_utf8();
         let token_kind: crate::types::TokenKind = $token_kind;
-        let remainder: &str = $remainder;
-        Ok((
-            crate::types::Token::new(token_kind, &remainder[..len]),
-            &remainder[len..],
-        ))
+        let (token, remainder): (&str, &str) = $remainder.split_at(len);
+        Ok(((token_kind, token), remainder))
     }};
 }
 
@@ -59,7 +54,15 @@ impl<'a> Iterator for SplitTokens<'a> {
     type Item = Result<Token<'a>, ParseTokenError<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.remainder = self.remainder.trim();
+        self.remainder = self.remainder.trim_matches(|c: char| {
+            if c == '\n' {
+                self.line_column.column = 0;
+                self.line_column.line += 1;
+            } else {
+                self.line_column.column += usize::from(c.is_whitespace());
+            }
+            c.is_whitespace()
+        });
 
         let mut chars = self.remainder.chars();
         Some(
@@ -74,29 +77,20 @@ impl<'a> Iterator for SplitTokens<'a> {
                             .map(|(i, _)| i)
                             .unwrap_or(self.remainder.len()),
                     );
-                    Ok((
-                        Token::new(TokenKind::Literal(Literal::Number), token),
-                        remainder,
-                    ))
+                    Ok(((TokenKind::Literal(Literal::Number), token), remainder))
                 }
                 // Comments
                 sp!('/', '/', '/') => {
                     let (token, remainder) = self
                         .remainder
                         .split_at(self.remainder.find('\n').unwrap_or(self.remainder.len()));
-                    Ok((
-                        Token::new(TokenKind::Comment(Comment::DocComment), token),
-                        remainder,
-                    ))
+                    Ok(((TokenKind::Comment(Comment::DocComment), token), remainder))
                 }
                 sp!('/', '/') => {
                     let (token, remainder) = self
                         .remainder
                         .split_at(self.remainder.find('\n').unwrap_or(self.remainder.len()));
-                    Ok((
-                        Token::new(TokenKind::Comment(Comment::Comment), token),
-                        remainder,
-                    ))
+                    Ok(((TokenKind::Comment(Comment::Comment), token), remainder))
                 }
                 // Puncts
                 sp!(':', '=') => st!(':', '=', TokenKind::Punct(Punct::Assign), self.remainder),
@@ -228,7 +222,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                         .collect::<Result<_, _>>()
                         .map(|s| {
                             (
-                                Token::new(
+                                (
                                     TokenKind::Literal(Literal::String(s)),
                                     &self.remainder[..=index],
                                 ),
@@ -246,7 +240,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                     if let Some(i) = token.find('_') {
                         return Some(Err(ParseTokenError::UnderscoreInProper(token, i)));
                     }
-                    Ok((Token::new(TokenKind::ProperIdent, token), remainder))
+                    Ok(((TokenKind::ProperIdent, token), remainder))
                 }
                 // Ident
                 (c, _) if c.is_alphabetic() | (c == '_') => {
@@ -259,7 +253,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                         return Some(Err(ParseTokenError::CapsInImproperIdent(token, i)));
                     }
                     Ok((
-                        Token::new(
+                        (
                             match token {
                                 "if" => TokenKind::Keyword(Keyword::If),
                                 "else" => TokenKind::Keyword(Keyword::Else),
@@ -290,9 +284,23 @@ impl<'a> Iterator for SplitTokens<'a> {
                     &self.remainder[..c.len_utf8()],
                 )),
             }
-            .map(|(token, remainder)| {
+            .map(|((token_kind, s), remainder)| {
                 self.remainder = remainder;
-                token
+                Token::new(
+                    token_kind,
+                    s,
+                    Span::new(self.line_column, {
+                        s.chars().for_each(|c| {
+                            if c == '\n' {
+                                self.line_column.column = 0;
+                                self.line_column.line += 1;
+                            } else {
+                                self.line_column.column += 1;
+                            }
+                        });
+                        self.line_column
+                    }),
+                )
             }),
         )
     }

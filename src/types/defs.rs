@@ -1,4 +1,4 @@
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Default, Debug, Eq, Hash, PartialEq)]
 pub struct Span {
     pub start: LineColumn,
     pub end: LineColumn,
@@ -10,7 +10,7 @@ impl Span {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Default, Debug, Eq, Hash, PartialEq)]
 pub struct LineColumn {
     pub line: usize,
     pub column: usize,
@@ -22,12 +22,24 @@ impl LineColumn {
     }
 }
 
+impl From<(usize, usize)> for LineColumn {
+    fn from((line, column): (usize, usize)) -> Self {
+        Self { line, column }
+    }
+}
+
+impl From<LineColumn> for (usize, usize) {
+    fn from(line_column: LineColumn) -> Self {
+        (line_column.line, line_column.column)
+    }
+}
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct Token<'a>(TokenKind, &'a str);
+pub struct Token<'a>(TokenKind, &'a str, Span);
 
 impl<'a> Token<'a> {
-    pub fn new(token_kind: TokenKind, s: &'a str) -> Self {
-        Self(token_kind, s)
+    pub fn new(token_kind: TokenKind, s: &'a str, span: Span) -> Self {
+        Self(token_kind, s, span)
     }
 }
 
