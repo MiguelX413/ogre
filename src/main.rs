@@ -88,12 +88,12 @@ impl<'a> Iterator for SplitTokens<'a> {
         Some(
             match (chars.next()?, chars.next().map(|c| (c, chars.next()))) {
                 // Number Literals
-                ('0'..='9', _) | ('+' | '-', Some(('0'..='9', _))) => {
+                sp!('0'..='9') | sp!('+' | '-', '0'..='9') => {
                     let (token, remainder) = self.remainder.split_at(
                         self.remainder
                             .char_indices()
                             .skip(1)
-                            .find(|(_, f)| !(f.is_ascii_digit()))
+                            .find(|&(_, c)| !(c.is_ascii_digit() | (c == '_')))
                             .map(|(i, _)| i)
                             .unwrap_or(self.remainder.len()),
                     );
@@ -324,7 +324,7 @@ pub fn main() {
         "if +2 + -2 else x := x - 5 ",
         "if {{10 / {45 + 3}} + {2 * 4}} - +5",
         "日本語a+123",
-        "cat- 32432432432432-ref",
+        "cat- 324_32432432432-ref",
         "{2133 ** 21} % 2",
         r#"let my_string := "lol\"test";
 let xd: Int := 2;
