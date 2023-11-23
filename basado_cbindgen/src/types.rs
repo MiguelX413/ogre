@@ -20,16 +20,35 @@ impl Drop for Str {
     }
 }
 
-impl Str {
-    fn from(s: Vec<u8>) -> Self {
-        let mut x = ManuallyDrop::new(s);
+impl From<String> for Str {
+    fn from(string: String) -> Self {
+        From::<Vec<u8>>::from(string.into_bytes())
+    }
+}
+
+impl From<Box<str>> for Str {
+    fn from(box_str: Box<str>) -> Self {
+        From::<Box<[u8]>>::from(Box::<[u8]>::from(box_str))
+    }
+}
+
+impl From<Box<[u8]>> for Str {
+    fn from(box_u8: Box<[u8]>) -> Self {
+        From::<Vec<u8>>::from(box_u8.into_vec())
+    }
+}
+
+impl From<Vec<u8>> for Str {
+    fn from(vec: Vec<u8>) -> Self {
+        let mut vec = ManuallyDrop::new(vec);
         Self {
-            ptr: x.as_mut_ptr(),
-            len: x.len(),
-            capacity: x.capacity(),
+            ptr: vec.as_mut_ptr(),
+            len: vec.len(),
+            capacity: vec.capacity(),
         }
     }
 }
+
 #[no_mangle]
 pub extern "C" fn drop_str(str: Str) {
     drop(str)
@@ -187,7 +206,7 @@ impl From<tokenizer::Literal> for Literal {
     fn from(literal: tokenizer::Literal) -> Self {
         match literal {
             tokenizer::Literal::Character(character) => Self::Character(character),
-            tokenizer::Literal::String(string) => Self::String(Str::from(string.into_bytes())),
+            tokenizer::Literal::String(string) => Self::String(string.into()),
             tokenizer::Literal::Number => Self::Number,
         }
     }

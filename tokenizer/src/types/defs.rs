@@ -102,7 +102,7 @@ pub enum Keyword {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Literal {
     Character(char),
-    String(String),
+    String(Box<str>),
     Number,
 }
 

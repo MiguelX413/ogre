@@ -254,11 +254,11 @@ impl<'a> Iterator for SplitTokens<'a> {
                             }
                             (cc, false) => Some(Ok(cc)),
                         })
-                        .collect::<Result<_, _>>()
+                        .collect::<Result<String, _>>()
                         .map(|s| {
                             (
                                 Token::new_auto_span(
-                                    TokenKind::Literal(Literal::String(s)),
+                                    TokenKind::Literal(Literal::String(s.into_boxed_str())),
                                     &self.remainder[..=index],
                                     self.line_column,
                                 ),
