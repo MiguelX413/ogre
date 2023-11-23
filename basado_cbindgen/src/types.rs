@@ -76,6 +76,8 @@ impl From<&str> for StrRef {
     }
 }
 
+/// cbindgen:derive-eq
+/// cbindgen:derive-constructor
 #[repr(C)]
 #[derive(Copy, Clone, Default, Debug, Eq, Hash, PartialEq)]
 pub struct Span {
@@ -92,6 +94,8 @@ impl From<tokenizer::Span> for Span {
     }
 }
 
+/// cbindgen:derive-eq
+/// cbindgen:derive-constructor
 #[repr(C)]
 #[derive(Copy, Clone, Default, Debug, Eq, Hash, PartialEq)]
 pub struct LineColumn {
