@@ -25,7 +25,7 @@ impl Str {
     }
     #[no_mangle]
     pub extern "C" fn drop_str(self) {
-        unsafe { Vec::<u8>::from_raw_parts(self.ptr, self.len, self.capacity) };
+        drop(unsafe { Vec::<u8>::from_raw_parts(self.ptr, self.len, self.capacity) })
     }
 }
 
