@@ -14,6 +14,12 @@ impl Clone for Str {
     }
 }
 
+impl Drop for Str {
+    fn drop(&mut self) {
+        drop(unsafe { Vec::<u8>::from_raw_parts(self.ptr, self.len, self.capacity) })
+    }
+}
+
 impl Str {
     fn from(s: Vec<u8>) -> Self {
         let mut x = ManuallyDrop::new(s);
@@ -23,10 +29,10 @@ impl Str {
             capacity: x.capacity(),
         }
     }
-    #[no_mangle]
-    pub extern "C" fn drop_str(self) {
-        drop(unsafe { Vec::<u8>::from_raw_parts(self.ptr, self.len, self.capacity) })
-    }
+}
+#[no_mangle]
+pub extern "C" fn drop_str(str: Str) {
+    drop(str)
 }
 
 #[repr(C)]
