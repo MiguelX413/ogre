@@ -2,6 +2,5 @@
 members = [
     "tokenizer",
     "demo",
-    "basado_cbindgen"
 ]
 resolver = "2"
