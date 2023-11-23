@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use crate::types::defs::{Delimiter, Keyword, ParseTokenError, Punct};
+use crate::types::defs::{Delimiter, Keyword, Punct};
 
 impl Display for Punct {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -76,20 +76,3 @@ impl Display for Keyword {
         }
     }
 }
-impl<'a> Display for ParseTokenError<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::InvalidChar(c, _) => write!(f, "Invalid char: {c}"),
-            Self::CapsInImproperIdent(s, i) => {
-                write!(f, "Caps in improper identifier, {s:?}, at pos {i}")
-            }
-            Self::UnderscoreInProper(s, i) => {
-                write!(f, "Underscore in proper identifier, {s:?}, at pos {i}")
-            }
-            Self::UnterminatedString => write!(f, "No string terminator found!"),
-            Self::InvalidEscape(c) => write!(f, "Invalid escape \\{c}"),
-        }
-    }
-}
-
-impl<'a> std::error::Error for ParseTokenError<'a> {}

@@ -1,9 +1,36 @@
 pub use crate::types::{
-    Comment, Delimiter, Keyword, LineColumn, Literal, ParseTokenError, Punct, Span, Token,
-    TokenKind,
+    Comment, Delimiter, Keyword, LineColumn, Literal, Punct, Span, Token, TokenKind,
 };
+use std::fmt::{Display, Formatter};
 
 mod types;
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ParseTokenError<'a> {
+    InvalidChar(char, &'a str),
+    CapsInImproperIdent(&'a str, usize),
+    UnderscoreInProper(&'a str, usize),
+    UnterminatedString,
+    InvalidEscape(char),
+}
+
+impl<'a> Display for ParseTokenError<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvalidChar(c, _) => write!(f, "Invalid char: {c}"),
+            Self::CapsInImproperIdent(s, i) => {
+                write!(f, "Caps in improper identifier, {s:?}, at pos {i}")
+            }
+            Self::UnderscoreInProper(s, i) => {
+                write!(f, "Underscore in proper identifier, {s:?}, at pos {i}")
+            }
+            Self::UnterminatedString => write!(f, "No string terminator found!"),
+            Self::InvalidEscape(c) => write!(f, "Invalid escape \\{c}"),
+        }
+    }
+}
+
+impl<'a> std::error::Error for ParseTokenError<'a> {}
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SplitTokens<'a> {

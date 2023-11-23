@@ -158,12 +158,3 @@ pub enum Comment {
     Comment,
     DocComment,
 }
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ParseTokenError<'a> {
-    InvalidChar(char, &'a str),
-    CapsInImproperIdent(&'a str, usize),
-    UnderscoreInProper(&'a str, usize),
-    UnterminatedString,
-    InvalidEscape(char),
-}
