@@ -5,7 +5,7 @@ use std::fmt::{Display, Formatter};
 
 mod types;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ParseTokenError<'a> {
     InvalidChar(char, &'a str),
     CapsInImproperIdent(&'a str, usize),
