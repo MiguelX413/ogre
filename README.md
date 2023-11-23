@@ -17,7 +17,7 @@ construction of the Abstract Syntax Tree (AST) and the LLVM front-end.
 
 - **Tokenizer**: The tokenizer is responsible for breaking down the source code into tokens, which are the basic
   building blocks for further
-  parsing. [View Tokenizer Code](https://github.com/MiguelX413/basado/blob/master/tokenizer/src/main.rs)
+  parsing. [View Tokenizer Code](https://github.com/MiguelX413/basado/blob/master/tokenizer/src/lib.rs)
 
 ### Upcoming Features
 
