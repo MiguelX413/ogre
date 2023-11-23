@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "tokenizer",
+    "demo",
 ]
 resolver = "2"
