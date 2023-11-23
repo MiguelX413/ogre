@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 #[derive(Copy, Clone, Default, Debug, Eq, Hash, PartialEq)]
 pub struct Span {
     pub start: LineColumn,
@@ -36,13 +38,13 @@ impl From<LineColumn> for (usize, usize) {
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Token<'a> {
-    pub token_kind: TokenKind,
+    pub token_kind: TokenKind<'a>,
     pub s: &'a str,
     pub span: Span,
 }
 
 impl<'a> Token<'a> {
-    pub fn new(token_kind: TokenKind, s: &'a str, span: Span) -> Self {
+    pub fn new(token_kind: TokenKind<'a>, s: &'a str, span: Span) -> Self {
         Self {
             token_kind,
             s,
@@ -50,7 +52,11 @@ impl<'a> Token<'a> {
         }
     }
 
-    pub fn new_auto_span(token_kind: TokenKind, s: &'a str, mut line_column: LineColumn) -> Self {
+    pub fn new_auto_span(
+        token_kind: TokenKind<'a>,
+        s: &'a str,
+        mut line_column: LineColumn,
+    ) -> Self {
         Self {
             token_kind,
             s,
@@ -70,11 +76,11 @@ impl<'a> Token<'a> {
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub enum TokenKind {
+pub enum TokenKind<'a> {
     Keyword(Keyword),
     Ident,
     ProperIdent,
-    Literal(Literal),
+    Literal(Literal<'a>),
     Punct(Punct),
     Delimiter(Delimiter),
     Comment(Comment),
@@ -100,9 +106,9 @@ pub enum Keyword {
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub enum Literal {
+pub enum Literal<'a> {
     Character(char),
-    String(String),
+    String(Cow<'a, str>),
     Number,
 }
 
