@@ -10,6 +10,18 @@ impl Span {
     }
 }
 
+impl From<(LineColumn, LineColumn)> for Span {
+    fn from((start, end): (LineColumn, LineColumn)) -> Self {
+        Self { start, end }
+    }
+}
+
+impl From<Span> for (LineColumn, LineColumn) {
+    fn from(span: Span) -> Self {
+        (span.start, span.end)
+    }
+}
+
 #[derive(Copy, Clone, Default, Debug, Eq, Hash, PartialEq)]
 pub struct LineColumn {
     pub line: usize,
@@ -101,7 +113,7 @@ pub enum Keyword {
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Literal {
-    Character(char),
+    Character(Box<str>),
     String(Box<str>),
     Number,
 }

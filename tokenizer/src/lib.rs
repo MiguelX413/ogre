@@ -1,6 +1,7 @@
 pub use crate::types::{
     Comment, Delimiter, Keyword, LineColumn, Literal, Punct, Span, Token, TokenKind,
 };
+use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
 
 mod types;
@@ -10,7 +11,8 @@ pub enum ParseTokenError<'a> {
     InvalidChar(char, &'a str),
     CapsInImproperIdent(&'a str, usize),
     UnderscoreInProper(&'a str, usize),
-    UnterminatedString,
+    UnterminatedStrLit,
+    UnterminatedChrLit,
     InvalidEscape(char),
 }
 
@@ -24,7 +26,8 @@ impl<'a> Display for ParseTokenError<'a> {
             Self::UnderscoreInProper(s, i) => {
                 write!(f, "Underscore in proper identifier, {s:?}, at pos {i}")
             }
-            Self::UnterminatedString => write!(f, "No string terminator found!"),
+            Self::UnterminatedStrLit => write!(f, "No string terminator found!"),
+            Self::UnterminatedChrLit => write!(f, "No char terminator found!"),
             Self::InvalidEscape(c) => write!(f, "Invalid escape \\{c}"),
         }
     }
@@ -95,6 +98,66 @@ macro_rules! st {
             remainder,
         ))
     }};
+}
+
+macro_rules! terminator_finder {
+    ($pat:pat, $str:expr) => {{
+        let mut escaped = false;
+        $str.char_indices()
+            .skip(1)
+            .find(|(_, c)| match (c, escaped) {
+                ('\\', false) => {
+                    escaped = true;
+                    false
+                }
+                ($pat, false) => true,
+                (_, true) => {
+                    escaped = false;
+                    false
+                }
+                (_, false) => false,
+            })
+            .map(|(i, _)| i)
+    }};
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct ParseEscapesError(char);
+
+impl<'a> From<ParseEscapesError> for ParseTokenError<'a> {
+    fn from(parse_escapes_error: ParseEscapesError) -> Self {
+        Self::InvalidEscape(parse_escapes_error.0)
+    }
+}
+
+/// This function is meant to be used on the content between the terminators of string and character literals
+pub fn parse_escapes(s: &str) -> Result<Cow<str>, ParseEscapesError> {
+    if !s.contains('\\') {
+        return Ok(Cow::Borrowed(s));
+    }
+    let mut escaped = false;
+    s.chars()
+        .filter_map(|c| match (c, escaped) {
+            ('\\', false) => {
+                escaped = true;
+                None
+            }
+            (cc, true) => {
+                escaped = false;
+                match cc {
+                    '\\' => Some(Ok('\\')),
+                    '\n' => None,
+                    'n' => Some(Ok('\n')),
+                    't' => Some(Ok('\t')),
+                    '0' => Some(Ok('\0')),
+                    '"' => Some(Ok('"')),
+                    '\'' => Some(Ok('\'')),
+                    ccc => Some(Err(ParseEscapesError(ccc))),
+                }
+            }
+            (cc, false) => Some(Ok(cc)),
+        })
+        .collect()
 }
 
 impl<'a> Iterator for SplitTokens<'a> {
@@ -208,57 +271,34 @@ impl<'a> Iterator for SplitTokens<'a> {
                 sp!('(') => st!('(', TokenKind::Delimiter(Delimiter::ParLeft), self),
                 sp!(')') => st!(')', TokenKind::Delimiter(Delimiter::ParRight), self),
                 // String Literals
-                ('"', _) => {
-                    let mut escaped = false;
-                    let Some(index) = self
-                        .remainder
-                        .char_indices()
-                        .skip(1)
-                        .find(|(_, c)| match (c, escaped) {
-                            ('\\', false) => {
-                                escaped = true;
-                                false
-                            }
-                            ('"', false) => true,
-                            (_, true) => {
-                                escaped = false;
-                                false
-                            }
-                            (_, false) => false,
-                        })
-                        .map(|(i, _)| i)
-                    else {
-                        return Some(Err(ParseTokenError::UnterminatedString));
+                sp!('"') => {
+                    let Some(index) = terminator_finder!('"', self.remainder) else {
+                        return Some(Err(ParseTokenError::UnterminatedStrLit));
                     };
-
-                    let mut escaped = false;
-                    self.remainder[1..index]
-                        .chars()
-                        .filter_map(|c| match (c, escaped) {
-                            ('\\', false) => {
-                                escaped = true;
-                                None
-                            }
-                            (cc, true) => {
-                                escaped = false;
-                                match cc {
-                                    '\\' => Some(Ok('\\')),
-                                    '\n' => None,
-                                    'n' => Some(Ok('\n')),
-                                    't' => Some(Ok('\t')),
-                                    '0' => Some(Ok('\0')),
-                                    '"' => Some(Ok('"')),
-                                    '\'' => Some(Ok('\'')),
-                                    ccc => Some(Err(ParseTokenError::InvalidEscape(ccc))),
-                                }
-                            }
-                            (cc, false) => Some(Ok(cc)),
-                        })
-                        .collect::<Result<String, _>>()
+                    parse_escapes(&self.remainder[1..index])
+                        .map_err(ParseTokenError::from)
                         .map(|s| {
                             (
                                 Token::new_auto_span(
-                                    TokenKind::Literal(Literal::String(s.into_boxed_str())),
+                                    TokenKind::Literal(Literal::String(s.into())),
+                                    &self.remainder[..=index],
+                                    self.line_column,
+                                ),
+                                &self.remainder[index + 1..],
+                            )
+                        })
+                }
+                // Char Literals
+                sp!('\'') => {
+                    let Some(index) = terminator_finder!('\'', self.remainder) else {
+                        return Some(Err(ParseTokenError::UnterminatedChrLit));
+                    };
+                    parse_escapes(&self.remainder[1..index])
+                        .map_err(ParseTokenError::from)
+                        .map(|s| {
+                            (
+                                Token::new_auto_span(
+                                    TokenKind::Literal(Literal::Character(s.into())),
                                     &self.remainder[..=index],
                                     self.line_column,
                                 ),
