@@ -275,36 +275,28 @@ impl<'a> Iterator for SplitTokens<'a> {
                     let Some(index) = terminator_finder!('"', self.remainder) else {
                         return Some(Err(ParseTokenError::UnterminatedStrLit));
                     };
-                    parse_escapes(&self.remainder[1..index])
-                        .map_err(ParseTokenError::from)
-                        .map(|s| {
-                            (
-                                Token::new_auto_span(
-                                    TokenKind::Literal(Literal::String(s.into())),
-                                    &self.remainder[..=index],
-                                    self.line_column,
-                                ),
-                                &self.remainder[index + 1..],
-                            )
-                        })
+                    Ok((
+                        Token::new_auto_span(
+                            TokenKind::Literal(Literal::String),
+                            &self.remainder[..=index],
+                            self.line_column,
+                        ),
+                        &self.remainder[index + 1..],
+                    ))
                 }
                 // Char Literals
                 sp!('\'') => {
                     let Some(index) = terminator_finder!('\'', self.remainder) else {
                         return Some(Err(ParseTokenError::UnterminatedChrLit));
                     };
-                    parse_escapes(&self.remainder[1..index])
-                        .map_err(ParseTokenError::from)
-                        .map(|s| {
-                            (
-                                Token::new_auto_span(
-                                    TokenKind::Literal(Literal::Character(s.into())),
-                                    &self.remainder[..=index],
-                                    self.line_column,
-                                ),
-                                &self.remainder[index + 1..],
-                            )
-                        })
+                    Ok((
+                        Token::new_auto_span(
+                            TokenKind::Literal(Literal::Character),
+                            &self.remainder[..=index],
+                            self.line_column,
+                        ),
+                        &self.remainder[index + 1..],
+                    ))
                 }
                 // Proper Ident
                 (c, _) if c.is_alphabetic() & c.is_uppercase() => {
