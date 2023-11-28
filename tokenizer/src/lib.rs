@@ -341,6 +341,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                                 "where" => TokenKind::Keyword(Keyword::Where),
                                 "miguel" => TokenKind::Keyword(Keyword::Miguel),
                                 "kyasig" => TokenKind::Keyword(Keyword::Kyasig),
+                                "claim" => TokenKind::Keyword(Keyword::Claim),
                                 // Underscore Punct
                                 "_" => TokenKind::Punct(Punct::Underscore),
                                 _ => TokenKind::Ident,

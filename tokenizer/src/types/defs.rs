@@ -109,6 +109,7 @@ pub enum Keyword {
     Where,
     Miguel,
     Kyasig,
+    Claim,
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
