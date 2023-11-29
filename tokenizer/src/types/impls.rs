@@ -13,7 +13,7 @@ impl Display for Punct {
             Self::Star => write!(f, "*"),
             Self::StarStar => write!(f, "**"),
             Self::Slash => write!(f, "/"),
-            Self::Percent => write!(f, "/"),
+            Self::Percent => write!(f, "%"),
             Self::Caret => write!(f, "^"),
             Self::Not => write!(f, "!"),
             Self::And => write!(f, "&"),

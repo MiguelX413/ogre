@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+
 pub use crate::types::{
     Comment, Delimiter, Keyword, LineColumn, Literal, Punct, Span, Token, TokenKind,
 };
@@ -130,7 +132,9 @@ impl<'a> From<ParseEscapesError> for ParseTokenError<'a> {
     }
 }
 
-/// This function is meant to be used on the content between the terminators of string and character literals
+/// This function is meant to be used on the content between the terminators of string and character literals.
+/// # Errors
+/// Returns `Err` if there is an invalid escape in `s`.
 pub fn parse_escapes(s: &str) -> Result<Cow<str>, ParseEscapesError> {
     if !s.contains('\\') {
         return Ok(Cow::Borrowed(s));
@@ -162,7 +166,7 @@ pub fn parse_escapes(s: &str) -> Result<Cow<str>, ParseEscapesError> {
 
 impl<'a> Iterator for SplitTokens<'a> {
     type Item = Result<Token<'a>, ParseTokenError<'a>>;
-
+    #[allow(clippy::too_many_lines)]
     fn next(&mut self) -> Option<Self::Item> {
         self.remainder = self.remainder.trim_matches(|c: char| {
             if c == '\n' {
@@ -184,8 +188,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                             .char_indices()
                             .skip(1)
                             .find(|&(_, c)| !(c.is_ascii_digit() | (c == '_')))
-                            .map(|(i, _)| i)
-                            .unwrap_or(self.remainder.len()),
+                            .map_or(self.remainder.len(), |(i, _)| i),
                     );
                     Ok((
                         Token::new_auto_span(
@@ -368,7 +371,7 @@ impl<'a> Iterator for SplitTokens<'a> {
         (0, Some(self.remainder.len()))
     }
 }
-
+#[must_use]
 pub fn split_tokens(string: &str) -> SplitTokens {
     SplitTokens::new(string)
 }

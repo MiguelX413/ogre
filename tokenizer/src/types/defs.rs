@@ -5,6 +5,7 @@ pub struct Span {
 }
 
 impl Span {
+    #[must_use]
     pub fn new(start: LineColumn, end: LineColumn) -> Self {
         Self { start, end }
     }
@@ -29,6 +30,7 @@ pub struct LineColumn {
 }
 
 impl LineColumn {
+    #[must_use]
     pub fn new(line: usize, column: usize) -> Self {
         Self { line, column }
     }
@@ -54,6 +56,7 @@ pub struct Token<'a> {
 }
 
 impl<'a> Token<'a> {
+    #[must_use]
     pub fn new(token_kind: TokenKind, s: &'a str, span: Span) -> Self {
         Self {
             token_kind,
@@ -62,6 +65,7 @@ impl<'a> Token<'a> {
         }
     }
 
+    #[must_use]
     pub fn new_auto_span(token_kind: TokenKind, s: &'a str, mut line_column: LineColumn) -> Self {
         Self {
             token_kind,
