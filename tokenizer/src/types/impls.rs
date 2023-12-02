@@ -74,6 +74,9 @@ impl Display for Keyword {
             Self::Miguel => write!(f, "miguel"),
             Self::Kyasig => write!(f, "kyasig"),
             Self::Claim => write!(f, "claim"),
+            Self::Cardinality => write!(f, "cardinality"),
+            Self::Bytes => write!(f, "bytes"),
+            Self::Bits => write!(f, "bits"),
         }
     }
 }

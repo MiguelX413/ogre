@@ -114,6 +114,9 @@ pub enum Keyword {
     Miguel,
     Kyasig,
     Claim,
+    Cardinality,
+    Bytes,
+    Bits,
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
