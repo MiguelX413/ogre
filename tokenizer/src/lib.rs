@@ -124,7 +124,7 @@ macro_rules! terminator_finder {
     ($pat:pat, $str:expr) => {{
         let mut escaped = false;
         let mut char_indices: core::str::CharIndices = $str.char_indices();
-        let _ = char_indices.next();
+        let _ = char_indices.next(); // Skip 1
         char_indices
             .find(|(_, c)| match (c, escaped) {
                 ('\\', false) => {
@@ -203,7 +203,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                 // Decimal Integer Literals
                 sp!('0'..='9') | sp!('+' | '-', '0'..='9') => {
                     let mut char_indices = self.remainder.char_indices();
-                    let _ = char_indices.next();
+                    let _ = char_indices.next(); // Skip 1
                     let (i, lit) = match (
                         char_indices.find(|&(_, c)| !(c.is_ascii_digit() | (c == '_'))),
                         char_indices.next(),
