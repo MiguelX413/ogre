@@ -5,6 +5,7 @@ pub use crate::types::{
 };
 use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
+use std::iter::FusedIterator;
 
 mod types;
 
@@ -374,6 +375,9 @@ impl<'a> Iterator for SplitTokens<'a> {
         (0, Some(self.remainder.len()))
     }
 }
+
+impl<'a> FusedIterator for SplitTokens<'a> {}
+
 #[must_use]
 pub fn split_tokens(string: &str) -> SplitTokens {
     SplitTokens::new(string)
