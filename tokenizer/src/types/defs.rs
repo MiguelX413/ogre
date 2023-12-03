@@ -123,7 +123,11 @@ pub enum Keyword {
 pub enum Literal {
     Character,
     String,
-    Number,
+    DecInt,
+    HexInt,
+    OctInt,
+    BinInt,
+    NonInt,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]

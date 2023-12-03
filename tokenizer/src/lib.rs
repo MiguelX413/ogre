@@ -123,8 +123,9 @@ macro_rules! st {
 macro_rules! terminator_finder {
     ($pat:pat, $str:expr) => {{
         let mut escaped = false;
-        $str.char_indices()
-            .skip(1)
+        let mut char_indices: core::str::CharIndices = $str.char_indices();
+        let _ = char_indices.next();
+        char_indices
             .find(|(_, c)| match (c, escaped) {
                 ('\\', false) => {
                     escaped = true;
@@ -199,21 +200,26 @@ impl<'a> Iterator for SplitTokens<'a> {
         let mut chars = self.remainder.chars();
         Some(
             match (chars.next()?, chars.next().map(|c| (c, chars.next()))) {
-                // Number Literals
+                // Decimal Integer Literals
                 sp!('0'..='9') | sp!('+' | '-', '0'..='9') => {
-                    let (token, remainder) = self.remainder.split_at(
-                        self.remainder
-                            .char_indices()
-                            .skip(1)
-                            .find(|&(_, c)| !(c.is_ascii_digit() | (c == '_')))
-                            .map_or(self.remainder.len(), |(i, _)| i),
-                    );
-                    Ok((
-                        Token::new_auto_span(
-                            TokenKind::Literal(Literal::Number),
-                            token,
-                            self.line_column,
+                    let mut char_indices = self.remainder.char_indices();
+                    let _ = char_indices.next();
+                    let (i, lit) = match (
+                        char_indices.find(|&(_, c)| !(c.is_ascii_digit() | (c == '_'))),
+                        char_indices.next(),
+                    ) {
+                        (Some((_, '.')), Some((_, '0'..='9'))) => (
+                            char_indices
+                                .find(|&(_, c)| !(c.is_ascii_digit() | (c == '_')))
+                                .map_or(self.remainder.len(), |(i, _)| i),
+                            Literal::NonInt,
                         ),
+                        (Some((i, _)), _) => (i, Literal::DecInt),
+                        (None, _) => (self.remainder.len(), Literal::DecInt),
+                    };
+                    let (token, remainder) = self.remainder.split_at(i);
+                    Ok((
+                        Token::new_auto_span(TokenKind::Literal(lit), token, self.line_column),
                         remainder,
                     ))
                 }
