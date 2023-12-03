@@ -18,6 +18,8 @@ let xd: Int := 2;
 let multi_line_str := "xd\
 sus";"#,
         "let _ := 5;",
+        "34_2 432.2_34 234.count_ones() 3424.",
+        "240",
     ]
     .into_iter()
     .for_each(|string| {
