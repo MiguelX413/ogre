@@ -53,6 +53,21 @@ impl<'a> SplitTokens<'a> {
             original: string,
         }
     }
+
+    #[must_use]
+    pub fn remainder(&self) -> &str {
+        self.remainder
+    }
+
+    #[must_use]
+    pub fn original(&self) -> &str {
+        self.original
+    }
+
+    #[must_use]
+    pub fn line_column(&self) -> LineColumn {
+        self.line_column
+    }
 }
 
 macro_rules! sp {
