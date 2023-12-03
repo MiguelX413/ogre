@@ -1,4 +1,5 @@
 #![warn(clippy::pedantic)]
+#![deny(unused_must_use)]
 
 pub use crate::types::{
     Comment, Delimiter, Keyword, LineColumn, Literal, Punct, Span, Token, TokenKind,
@@ -46,10 +47,11 @@ pub struct SplitTokens<'a> {
 }
 
 impl<'a> SplitTokens<'a> {
+    #[must_use]
     fn new(string: &str) -> SplitTokens {
         SplitTokens {
             remainder: string,
-            line_column: LineColumn::default(),
+            line_column: LineColumn::new(0, 0),
             original: string,
         }
     }
