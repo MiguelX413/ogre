@@ -42,17 +42,17 @@ impl<'a> std::error::Error for ParseTokenError<'a> {}
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SplitTokens<'a> {
     remainder: &'a str,
-    line_column: LineColumn,
     original: &'a str,
+    line_column: LineColumn,
 }
 
 impl<'a> SplitTokens<'a> {
     #[must_use]
-    fn new(string: &str) -> SplitTokens {
-        SplitTokens {
-            remainder: string,
-            line_column: LineColumn::new(0, 0),
-            original: string,
+    pub(crate) fn new(remainder: &'a str, original: &'a str, line_column: LineColumn) -> Self {
+        Self {
+            remainder,
+            original,
+            line_column,
         }
     }
 
@@ -403,5 +403,5 @@ impl<'a> FusedIterator for SplitTokens<'a> {}
 
 #[must_use]
 pub fn split_tokens(string: &str) -> SplitTokens {
-    SplitTokens::new(string)
+    SplitTokens::new(string, string, LineColumn::new(0, 0))
 }
