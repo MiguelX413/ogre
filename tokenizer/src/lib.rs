@@ -120,7 +120,7 @@ macro_rules! st {
     }};
 }
 
-macro_rules! terminator_finder {
+macro_rules! find_unescaped {
     ($pat:pat, $str:expr) => {{
         let mut escaped = false;
         let mut char_indices: core::str::CharIndices = $str.char_indices();
@@ -299,7 +299,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                 sp!(')') => st!(')', TokenKind::Delimiter(Delimiter::ParRight), self),
                 // String Literals
                 sp!('"') => {
-                    let Some(index) = terminator_finder!('"', self.remainder) else {
+                    let Some(index) = find_unescaped!('"', self.remainder) else {
                         return Some(Err(ParseTokenError::UnterminatedStrLit));
                     };
                     Ok((
@@ -313,7 +313,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                 }
                 // Char Literals
                 sp!('\'') => {
-                    let Some(index) = terminator_finder!('\'', self.remainder) else {
+                    let Some(index) = find_unescaped!('\'', self.remainder) else {
                         return Some(Err(ParseTokenError::UnterminatedChrLit));
                     };
                     Ok((
