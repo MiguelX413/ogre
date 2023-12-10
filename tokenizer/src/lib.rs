@@ -2,7 +2,7 @@
 #![deny(unused_must_use)]
 
 pub use crate::types::{
-    Comment, Delimiter, Keyword, LineColumn, Literal, Punct, Span, Token, TokenKind,
+    Comment, Delimiter, Keyword, LineColumn, Literal, Punct, Span, Token, TokenType,
 };
 use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
@@ -84,14 +84,14 @@ macro_rules! sp {
     };
 }
 macro_rules! st {
-    ($char:expr, $token_kind:expr, $self:expr) => {{
+    ($char:expr, $token_type:expr, $self:expr) => {{
         let char: char = $char;
         let len: usize = char.len_utf8();
-        let token_kind: crate::types::TokenKind = $token_kind;
+        let token_type: crate::types::TokenType = $token_type;
         let (token, remainder): (&str, &str) = $self.remainder.split_at(len);
         Ok((
             Token::new(
-                token_kind,
+                token_type,
                 token,
                 Span::new(
                     $self.line_column,
@@ -101,14 +101,14 @@ macro_rules! st {
             remainder,
         ))
     }};
-    ($char1:expr, $char2:expr, $token_kind:expr, $self:expr) => {{
+    ($char1:expr, $char2:expr, $token_type:expr, $self:expr) => {{
         let (char1, char2): (char, char) = ($char1, $char2);
         let len: usize = char1.len_utf8() + char2.len_utf8();
-        let token_kind: crate::types::TokenKind = $token_kind;
+        let token_type: crate::types::TokenType = $token_type;
         let (token, remainder): (&str, &str) = $self.remainder.split_at(len);
         Ok((
             Token::new(
-                token_kind,
+                token_type,
                 token,
                 Span::new(
                     $self.line_column,
@@ -219,7 +219,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                     };
                     let (token, remainder) = self.remainder.split_at(i);
                     Ok((
-                        Token::new_auto_span(TokenKind::Literal(lit), token, self.line_column),
+                        Token::new_auto_span(TokenType::Literal(lit), token, self.line_column),
                         remainder,
                     ))
                 }
@@ -230,7 +230,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                         .split_at(self.remainder.find('\n').unwrap_or(self.remainder.len()));
                     Ok((
                         Token::new_auto_span(
-                            TokenKind::Comment(Comment::DocComment),
+                            TokenType::Comment(Comment::DocComment),
                             token,
                             self.line_column,
                         ),
@@ -243,7 +243,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                         .split_at(self.remainder.find('\n').unwrap_or(self.remainder.len()));
                     Ok((
                         Token::new_auto_span(
-                            TokenKind::Comment(Comment::Comment),
+                            TokenType::Comment(Comment::Comment),
                             token,
                             self.line_column,
                         ),
@@ -251,52 +251,52 @@ impl<'a> Iterator for SplitTokens<'a> {
                     ))
                 }
                 // Puncts
-                sp!(':', '=') => st!(':', '=', TokenKind::Punct(Punct::Assign), self),
-                sp!('+', '+') => st!('+', '+', TokenKind::Punct(Punct::PlusPlus), self),
-                sp!('-', '-') => st!('-', '-', TokenKind::Punct(Punct::MinusMinus), self),
-                sp!('≔') => st!('≔', TokenKind::Punct(Punct::Assign), self),
-                sp!('+') => st!('+', TokenKind::Punct(Punct::Plus), self),
-                sp!('/') => st!('/', TokenKind::Punct(Punct::Slash), self),
-                sp!('*', '*') => st!('*', '*', TokenKind::Punct(Punct::StarStar), self),
-                sp!('*') => st!('*', TokenKind::Punct(Punct::Star), self),
-                sp!('%') => st!('%', TokenKind::Punct(Punct::Percent), self),
-                sp!('^') => st!('^', TokenKind::Punct(Punct::Caret), self),
-                sp!('&') => st!('&', TokenKind::Punct(Punct::And), self),
-                sp!('∧') => st!('∧', TokenKind::Punct(Punct::And), self),
-                sp!('|') => st!('|', TokenKind::Punct(Punct::Or), self),
-                sp!('∨') => st!('∨', TokenKind::Punct(Punct::Or), self),
-                sp!('<', '<') => st!('<', '<', TokenKind::Punct(Punct::Shl), self),
-                sp!('>', '>') => st!('>', '>', TokenKind::Punct(Punct::Shr), self),
-                sp!('=', '=') => st!('=', '=', TokenKind::Punct(Punct::EqEq), self),
-                sp!('!') => st!('!', TokenKind::Punct(Punct::Not), self),
-                sp!('¬') => st!('¬', TokenKind::Punct(Punct::Not), self),
-                sp!('不') => st!('不', TokenKind::Punct(Punct::Not), self),
-                sp!('>', '=') => st!('>', '=', TokenKind::Punct(Punct::Ge), self),
-                sp!('≥') => st!('≥', TokenKind::Punct(Punct::Ge), self),
-                sp!('<', '=') => st!('<', '=', TokenKind::Punct(Punct::Le), self),
-                sp!('≤') => st!('≤', TokenKind::Punct(Punct::Le), self),
-                sp!('>') => st!('>', TokenKind::Punct(Punct::Gt), self),
-                sp!('<') => st!('<', TokenKind::Punct(Punct::Lt), self),
-                sp!('@') => st!('@', TokenKind::Punct(Punct::At), self),
-                sp!('.') => st!('.', TokenKind::Punct(Punct::Dot), self),
-                sp!(',') => st!(',', TokenKind::Punct(Punct::Comma), self),
-                sp!(';') => st!(';', TokenKind::Punct(Punct::Semi), self),
-                sp!(':', ':') => st!(':', ':', TokenKind::Punct(Punct::ColonColon), self),
-                sp!(':') => st!(':', TokenKind::Punct(Punct::Colon), self),
-                sp!('-', '>') => st!('-', '>', TokenKind::Punct(Punct::RArrow), self),
-                sp!('-') => st!('-', TokenKind::Punct(Punct::Minus), self),
-                sp!('=', '>') => st!('=', '>', TokenKind::Punct(Punct::FatArrow), &self),
-                sp!('=') => st!('=', TokenKind::Punct(Punct::Eq), self),
-                sp!('~') => st!('~', TokenKind::Punct(Punct::Tilde), self),
-                sp!('∀') => st!('∀', TokenKind::Punct(Punct::ForAll), self),
-                sp!('∃') => st!('∃', TokenKind::Punct(Punct::Exists), self),
+                sp!(':', '=') => st!(':', '=', TokenType::Punct(Punct::Assign), self),
+                sp!('+', '+') => st!('+', '+', TokenType::Punct(Punct::PlusPlus), self),
+                sp!('-', '-') => st!('-', '-', TokenType::Punct(Punct::MinusMinus), self),
+                sp!('≔') => st!('≔', TokenType::Punct(Punct::Assign), self),
+                sp!('+') => st!('+', TokenType::Punct(Punct::Plus), self),
+                sp!('/') => st!('/', TokenType::Punct(Punct::Slash), self),
+                sp!('*', '*') => st!('*', '*', TokenType::Punct(Punct::StarStar), self),
+                sp!('*') => st!('*', TokenType::Punct(Punct::Star), self),
+                sp!('%') => st!('%', TokenType::Punct(Punct::Percent), self),
+                sp!('^') => st!('^', TokenType::Punct(Punct::Caret), self),
+                sp!('&') => st!('&', TokenType::Punct(Punct::And), self),
+                sp!('∧') => st!('∧', TokenType::Punct(Punct::And), self),
+                sp!('|') => st!('|', TokenType::Punct(Punct::Or), self),
+                sp!('∨') => st!('∨', TokenType::Punct(Punct::Or), self),
+                sp!('<', '<') => st!('<', '<', TokenType::Punct(Punct::Shl), self),
+                sp!('>', '>') => st!('>', '>', TokenType::Punct(Punct::Shr), self),
+                sp!('=', '=') => st!('=', '=', TokenType::Punct(Punct::EqEq), self),
+                sp!('!') => st!('!', TokenType::Punct(Punct::Not), self),
+                sp!('¬') => st!('¬', TokenType::Punct(Punct::Not), self),
+                sp!('不') => st!('不', TokenType::Punct(Punct::Not), self),
+                sp!('>', '=') => st!('>', '=', TokenType::Punct(Punct::Ge), self),
+                sp!('≥') => st!('≥', TokenType::Punct(Punct::Ge), self),
+                sp!('<', '=') => st!('<', '=', TokenType::Punct(Punct::Le), self),
+                sp!('≤') => st!('≤', TokenType::Punct(Punct::Le), self),
+                sp!('>') => st!('>', TokenType::Punct(Punct::Gt), self),
+                sp!('<') => st!('<', TokenType::Punct(Punct::Lt), self),
+                sp!('@') => st!('@', TokenType::Punct(Punct::At), self),
+                sp!('.') => st!('.', TokenType::Punct(Punct::Dot), self),
+                sp!(',') => st!(',', TokenType::Punct(Punct::Comma), self),
+                sp!(';') => st!(';', TokenType::Punct(Punct::Semi), self),
+                sp!(':', ':') => st!(':', ':', TokenType::Punct(Punct::ColonColon), self),
+                sp!(':') => st!(':', TokenType::Punct(Punct::Colon), self),
+                sp!('-', '>') => st!('-', '>', TokenType::Punct(Punct::RArrow), self),
+                sp!('-') => st!('-', TokenType::Punct(Punct::Minus), self),
+                sp!('=', '>') => st!('=', '>', TokenType::Punct(Punct::FatArrow), &self),
+                sp!('=') => st!('=', TokenType::Punct(Punct::Eq), self),
+                sp!('~') => st!('~', TokenType::Punct(Punct::Tilde), self),
+                sp!('∀') => st!('∀', TokenType::Punct(Punct::ForAll), self),
+                sp!('∃') => st!('∃', TokenType::Punct(Punct::Exists), self),
                 // Delimiters
-                sp!('{') => st!('{', TokenKind::Delimiter(Delimiter::CurlyLeft), self),
-                sp!('}') => st!('}', TokenKind::Delimiter(Delimiter::CurlyRight), self),
-                sp!('[') => st!('[', TokenKind::Delimiter(Delimiter::SquareLeft), self),
-                sp!(']') => st!(']', TokenKind::Delimiter(Delimiter::SquareRight), self),
-                sp!('(') => st!('(', TokenKind::Delimiter(Delimiter::ParLeft), self),
-                sp!(')') => st!(')', TokenKind::Delimiter(Delimiter::ParRight), self),
+                sp!('{') => st!('{', TokenType::Delimiter(Delimiter::CurlyLeft), self),
+                sp!('}') => st!('}', TokenType::Delimiter(Delimiter::CurlyRight), self),
+                sp!('[') => st!('[', TokenType::Delimiter(Delimiter::SquareLeft), self),
+                sp!(']') => st!(']', TokenType::Delimiter(Delimiter::SquareRight), self),
+                sp!('(') => st!('(', TokenType::Delimiter(Delimiter::ParLeft), self),
+                sp!(')') => st!(')', TokenType::Delimiter(Delimiter::ParRight), self),
                 // String Literals
                 sp!('"') => {
                     let Some(index) = find_unescaped!('"', self.remainder) else {
@@ -304,7 +304,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                     };
                     Ok((
                         Token::new_auto_span(
-                            TokenKind::Literal(Literal::String),
+                            TokenType::Literal(Literal::String),
                             &self.remainder[..=index],
                             self.line_column,
                         ),
@@ -318,7 +318,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                     };
                     Ok((
                         Token::new_auto_span(
-                            TokenKind::Literal(Literal::Character),
+                            TokenType::Literal(Literal::Character),
                             &self.remainder[..=index],
                             self.line_column,
                         ),
@@ -336,7 +336,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                         return Some(Err(ParseTokenError::UnderscoreInProper(token, i)));
                     }
                     Ok((
-                        Token::new_auto_span(TokenKind::ProperIdent, token, self.line_column),
+                        Token::new_auto_span(TokenType::ProperIdent, token, self.line_column),
                         remainder,
                     ))
                 }
@@ -353,28 +353,28 @@ impl<'a> Iterator for SplitTokens<'a> {
                     Ok((
                         Token::new_auto_span(
                             match token {
-                                "if" => TokenKind::Keyword(Keyword::If),
-                                "else" => TokenKind::Keyword(Keyword::Else),
-                                "match" => TokenKind::Keyword(Keyword::Match),
-                                "while" => TokenKind::Keyword(Keyword::While),
-                                "loop" => TokenKind::Keyword(Keyword::Loop),
-                                "true" => TokenKind::Keyword(Keyword::True),
-                                "false" => TokenKind::Keyword(Keyword::False),
-                                "let" => TokenKind::Keyword(Keyword::Let),
-                                "type" => TokenKind::Keyword(Keyword::Type),
-                                "typeclass" => TokenKind::Keyword(Keyword::Typeclass),
-                                "ret" => TokenKind::Keyword(Keyword::Ret),
-                                "gen" => TokenKind::Keyword(Keyword::Gen),
-                                "where" => TokenKind::Keyword(Keyword::Where),
-                                "miguel" => TokenKind::Keyword(Keyword::Miguel),
-                                "kyasig" => TokenKind::Keyword(Keyword::Kyasig),
-                                "claim" => TokenKind::Keyword(Keyword::Claim),
-                                "cardinality" => TokenKind::Keyword(Keyword::Cardinality),
-                                "bytes" => TokenKind::Keyword(Keyword::Bytes),
-                                "bits" => TokenKind::Keyword(Keyword::Bits),
+                                "if" => TokenType::Keyword(Keyword::If),
+                                "else" => TokenType::Keyword(Keyword::Else),
+                                "match" => TokenType::Keyword(Keyword::Match),
+                                "while" => TokenType::Keyword(Keyword::While),
+                                "loop" => TokenType::Keyword(Keyword::Loop),
+                                "true" => TokenType::Keyword(Keyword::True),
+                                "false" => TokenType::Keyword(Keyword::False),
+                                "let" => TokenType::Keyword(Keyword::Let),
+                                "type" => TokenType::Keyword(Keyword::Type),
+                                "typeclass" => TokenType::Keyword(Keyword::Typeclass),
+                                "ret" => TokenType::Keyword(Keyword::Ret),
+                                "gen" => TokenType::Keyword(Keyword::Gen),
+                                "where" => TokenType::Keyword(Keyword::Where),
+                                "miguel" => TokenType::Keyword(Keyword::Miguel),
+                                "kyasig" => TokenType::Keyword(Keyword::Kyasig),
+                                "claim" => TokenType::Keyword(Keyword::Claim),
+                                "cardinality" => TokenType::Keyword(Keyword::Cardinality),
+                                "bytes" => TokenType::Keyword(Keyword::Bytes),
+                                "bits" => TokenType::Keyword(Keyword::Bits),
                                 // Underscore Punct
-                                "_" => TokenKind::Punct(Punct::Underscore),
-                                _ => TokenKind::Ident,
+                                "_" => TokenType::Punct(Punct::Underscore),
+                                _ => TokenType::Ident,
                             },
                             token,
                             self.line_column,
