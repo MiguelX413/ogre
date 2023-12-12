@@ -85,7 +85,7 @@ impl<'a> Token<'a> {
     }
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum TokenType {
     Keyword(Keyword),
     Ident,
@@ -119,7 +119,7 @@ pub enum Keyword {
     Bits,
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Literal {
     Character,
     String,
