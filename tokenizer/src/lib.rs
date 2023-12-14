@@ -1,4 +1,22 @@
-#![warn(clippy::pedantic)]
+#![warn(
+    clippy::pedantic,
+    clippy::decimal_literal_representation,
+    clippy::format_push_string,
+    clippy::print_stderr,
+    clippy::print_stdout,
+    clippy::str_to_string,
+    clippy::string_add,
+    clippy::string_lit_chars_any,
+    clippy::string_to_string,
+    clippy::suspicious_xor_used_as_pow,
+    clippy::tests_outside_test_module,
+    clippy::todo,
+    clippy::try_err,
+    clippy::undocumented_unsafe_blocks,
+    clippy::unimplemented,
+    clippy::separated_literal_suffix,
+    clippy::unreadable_literal
+)]
 #![deny(unused_must_use)]
 
 pub use crate::types::{
