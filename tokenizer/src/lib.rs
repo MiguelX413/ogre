@@ -15,9 +15,12 @@
     clippy::undocumented_unsafe_blocks,
     clippy::unimplemented,
     clippy::separated_literal_suffix,
-    clippy::unreadable_literal
+    clippy::unreadable_literal,
+    clippy::if_then_some_else_none,
+    clippy::impl_trait_in_params,
+    clippy::default_numeric_fallback,
+    unused_must_use
 )]
-#![deny(unused_must_use)]
 
 pub use crate::types::{
     Comment, Delimiter, Keyword, LineColumn, Literal, Punct, Span, Token, TokenType,
