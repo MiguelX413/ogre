@@ -61,15 +61,11 @@ impl Display for Keyword {
             Self::If => write!(f, "if"),
             Self::Else => write!(f, "else"),
             Self::Match => write!(f, "match"),
-            Self::While => write!(f, "while"),
             Self::Loop => write!(f, "loop"),
-            Self::True => write!(f, "true"),
-            Self::False => write!(f, "false"),
             Self::Let => write!(f, "let"),
             Self::Type => write!(f, "type"),
-            Self::Typeclass => write!(f, "typeclass"),
+            Self::Class => write!(f, "class"),
             Self::Ret => write!(f, "ret"),
-            Self::Gen => write!(f, "gen"),
             Self::Where => write!(f, "where"),
             Self::Miguel => write!(f, "miguel"),
             Self::Kyasig => write!(f, "kyasig"),
@@ -77,6 +73,7 @@ impl Display for Keyword {
             Self::Cardinality => write!(f, "cardinality"),
             Self::Bytes => write!(f, "bytes"),
             Self::Bits => write!(f, "bits"),
+            Self::Fn => write!(f, "fn"),
         }
     }
 }

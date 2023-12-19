@@ -101,15 +101,11 @@ pub enum Keyword {
     If,
     Else,
     Match,
-    While,
     Loop,
-    True,
-    False,
     Let,
     Type,
-    Typeclass,
+    Class,
     Ret,
-    Gen,
     Where,
     Miguel,
     Kyasig,
@@ -117,6 +113,7 @@ pub enum Keyword {
     Cardinality,
     Bytes,
     Bits,
+    Fn,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
