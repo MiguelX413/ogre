@@ -14,7 +14,7 @@
     clippy::try_err,
     clippy::undocumented_unsafe_blocks,
     clippy::unimplemented,
-    clippy::separated_literal_suffix,
+    clippy::unseparated_literal_suffix,
     clippy::unreadable_literal,
     clippy::if_then_some_else_none,
     clippy::impl_trait_in_params,
