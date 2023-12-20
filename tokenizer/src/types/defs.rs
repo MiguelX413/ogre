@@ -51,27 +51,31 @@ impl From<LineColumn> for (usize, usize) {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Token<'a> {
     pub token_type: TokenType,
-    pub s: &'a str,
+    pub lexeme: &'a str,
     pub span: Span,
 }
 
 impl<'a> Token<'a> {
     #[must_use]
-    pub fn new(token_type: TokenType, s: &'a str, span: Span) -> Self {
+    pub fn new(token_type: TokenType, lexeme: &'a str, span: Span) -> Self {
         Self {
             token_type,
-            s,
+            lexeme,
             span,
         }
     }
 
     #[must_use]
-    pub fn new_auto_span(token_type: TokenType, s: &'a str, mut line_column: LineColumn) -> Self {
+    pub fn new_auto_span(
+        token_type: TokenType,
+        lexeme: &'a str,
+        mut line_column: LineColumn,
+    ) -> Self {
         Self {
             token_type,
-            s,
+            lexeme,
             span: Span::new(line_column, {
-                s.chars().for_each(|c| {
+                lexeme.chars().for_each(|c| {
                     if c == '\n' {
                         line_column.column = 0;
                         line_column.line += 1;
