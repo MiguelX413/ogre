@@ -48,7 +48,7 @@ impl From<LineColumn> for (usize, usize) {
     }
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Token<'a> {
     pub token_type: TokenType,
     pub lexeme: &'a str,
