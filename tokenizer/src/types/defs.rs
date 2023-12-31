@@ -166,6 +166,13 @@ pub enum Punct {
     Tilde,
     ForAll,
     Exists,
+    PlusPercent,
+    PlusPipe,
+    MinusPipe,
+    MinusPercent,
+    StarPercent,
+    StarPipe,
+    ShlPipe,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]

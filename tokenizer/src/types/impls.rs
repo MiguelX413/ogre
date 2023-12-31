@@ -38,6 +38,13 @@ impl Display for Punct {
             Self::Tilde => write!(f, "~"),
             Self::ForAll => write!(f, "∀"),
             Self::Exists => write!(f, "∃"),
+            Self::PlusPercent => write!(f, "+%"),
+            Self::PlusPipe => write!(f, "+|"),
+            Self::MinusPercent => write!(f, "-%"),
+            Self::MinusPipe => write!(f, "-|"),
+            Self::StarPercent => write!(f, "*%"),
+            Self::StarPipe => write!(f, "*|"),
+            Self::ShlPipe => write!(f, "<<|"),
         }
     }
 }

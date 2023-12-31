@@ -145,6 +145,23 @@ macro_rules! st {
             remainder,
         ))
     }};
+    ($char1:expr, $char2:expr, $char3:expr, $token_type:expr, $self:expr) => {{
+        let (char1, char2, char3): (char, char, char) = ($char1, $char2, $char3);
+        let len: usize = char1.len_utf8() + char2.len_utf8() + char3.len_utf8();
+        let token_type: crate::types::TokenType = $token_type;
+        let (token, remainder): (&str, &str) = $self.remainder.split_at(len);
+        Ok((
+            Token::new(
+                token_type,
+                token,
+                Span::new(
+                    $self.line_column,
+                    LineColumn::new($self.line_column.line, $self.line_column.column + 3),
+                ),
+            ),
+            remainder,
+        ))
+    }};
 }
 
 macro_rules! find_unescaped {
@@ -280,11 +297,17 @@ impl<'a> Iterator for SplitTokens<'a> {
                 // Puncts
                 sp!(':', '=') => st!(':', '=', TokenType::Punct(Punct::Assign), self),
                 sp!('+', '+') => st!('+', '+', TokenType::Punct(Punct::PlusPlus), self),
+                sp!('+', '%') => st!('+', '%', TokenType::Punct(Punct::PlusPercent), self),
+                sp!('+', '|') => st!('+', '|', TokenType::Punct(Punct::PlusPipe), self),
                 sp!('-', '-') => st!('-', '-', TokenType::Punct(Punct::MinusMinus), self),
+                sp!('-', '%') => st!('-', '%', TokenType::Punct(Punct::MinusPercent), self),
+                sp!('-', '|') => st!('-', '|', TokenType::Punct(Punct::MinusPipe), self),
                 sp!('≔') => st!('≔', TokenType::Punct(Punct::Assign), self),
                 sp!('+') => st!('+', TokenType::Punct(Punct::Plus), self),
                 sp!('/') => st!('/', TokenType::Punct(Punct::Slash), self),
                 sp!('*', '*') => st!('*', '*', TokenType::Punct(Punct::StarStar), self),
+                sp!('*', '%') => st!('*', '%', TokenType::Punct(Punct::StarPercent), self),
+                sp!('*', '|') => st!('*', '|', TokenType::Punct(Punct::StarPipe), self),
                 sp!('*') => st!('*', TokenType::Punct(Punct::Star), self),
                 sp!('%') => st!('%', TokenType::Punct(Punct::Percent), self),
                 sp!('^') => st!('^', TokenType::Punct(Punct::Caret), self),
@@ -292,6 +315,7 @@ impl<'a> Iterator for SplitTokens<'a> {
                 sp!('∧') => st!('∧', TokenType::Punct(Punct::And), self),
                 sp!('|') => st!('|', TokenType::Punct(Punct::Or), self),
                 sp!('∨') => st!('∨', TokenType::Punct(Punct::Or), self),
+                sp!('<', '<', '|') => st!('<', '<', '|', TokenType::Punct(Punct::ShlPipe), self),
                 sp!('<', '<') => st!('<', '<', TokenType::Punct(Punct::Shl), self),
                 sp!('>', '>') => st!('>', '>', TokenType::Punct(Punct::Shr), self),
                 sp!('=', '=') => st!('=', '=', TokenType::Punct(Punct::EqEq), self),
