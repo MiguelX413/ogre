@@ -1,8 +1,8 @@
-# Allium Compiler
+# Ogre Compiler
 
 ## Introduction
 
-Welcome to the Allium Compiler project! Allium is an innovative programming language that
+Welcome to the Ogre Compiler project! Ogre is an innovative programming language that
 seamlessly integrates systems programming with advanced academic and theoretical computer science concepts. This
 language is designed to offer a unique blend of features like dependent types, function currying, and functional
 programming, catering to both practical and theoretical applications in computer science.
@@ -17,7 +17,7 @@ construction of the Abstract Syntax Tree (AST) and the LLVM front-end.
 
 - **Tokenizer**: The tokenizer is responsible for breaking down the source code into tokens, which are the basic
   building blocks for further
-  parsing. [View Tokenizer Code](https://github.com/MiguelX413/allium/blob/master/tokenizer/src/lib.rs)
+  parsing. [View Tokenizer Code](https://github.com/MiguelX413/ogre/blob/master/tokenizer/src/lib.rs)
 
 ### Upcoming Features
 
@@ -28,4 +28,4 @@ construction of the Abstract Syntax Tree (AST) and the LLVM front-end.
 
 ## License
 
-This project is licensed under [GPL-3.0 License](https://github.com/MiguelX413/allium/blob/master/LICENSE).
+This project is licensed under [GPL-3.0 License](https://github.com/MiguelX413/ogre/blob/master/LICENSE).
